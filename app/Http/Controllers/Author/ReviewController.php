@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Author;
 
 use App\Http\Controllers\Controller;
 use App\Models\Review;
+use App\Notifications\ReviewReplied;
 use App\Support\Nav;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -33,6 +34,8 @@ class ReviewController extends Controller
         $this->authorize('reply', $review);
         $data = $request->validate(['reply_body' => ['required', 'string', 'max:2000']]);
         $review->update(['reply_body' => $data['reply_body'], 'replied_at' => now()]);
+
+        $review->customer->notify(new ReviewReplied($review));
 
         return back()->with('status', 'Reply posted.');
     }

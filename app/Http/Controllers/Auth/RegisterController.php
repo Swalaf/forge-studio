@@ -33,7 +33,8 @@ class RegisterController extends Controller
         ]);
 
         Auth::login($user);
+        $request->session()->regenerate();
 
-        return redirect()->route('account.overview');
+        return redirect()->intended(route('account.overview'));
     }
 }

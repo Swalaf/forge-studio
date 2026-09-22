@@ -22,7 +22,10 @@
             </div>
             <button type="submit" class="btn btn-dark btn-block">Sign in</button>
         </form>
-        <p style="text-align:center;font-size:13px;color:var(--muted);margin-top:18px">
+        <p style="text-align:center;font-size:13px;color:var(--muted);margin-top:14px">
+            <a href="{{ route('password.request') }}">Forgot your password?</a>
+        </p>
+        <p style="text-align:center;font-size:13px;color:var(--muted);margin-top:6px">
             No account? <a href="{{ route('register') }}">Create one</a>
         </p>
     </div>

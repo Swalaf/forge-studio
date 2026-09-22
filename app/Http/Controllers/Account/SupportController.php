@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Account;
 use App\Http\Controllers\Controller;
 use App\Models\Product;
 use App\Models\Ticket;
+use App\Notifications\TicketReplied;
 use App\Support\Nav;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -87,8 +88,11 @@ class SupportController extends Controller
     {
         $this->authorize('reply', $ticket);
         $data = $request->validate(['body' => ['required', 'string']]);
-        $ticket->messages()->create(['author_id' => $request->user()->id, 'body' => $data['body']]);
+        $message = $ticket->messages()->create(['author_id' => $request->user()->id, 'body' => $data['body']]);
         $ticket->update(['status' => 'open']);
+
+        $recipient = $ticket->assignee ?? $ticket->product?->author;
+        $recipient?->notify(new TicketReplied($message));
 
         return back()->with('status', 'Message sent.');
     }

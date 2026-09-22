@@ -5,13 +5,21 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\AuditLog;
 use App\Models\Order;
+use App\Services\PaystackClient;
 use App\Support\Nav;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
+use Stripe\Checkout\Session as StripeCheckoutSession;
+use Stripe\Refund as StripeRefund;
+use Stripe\Stripe;
 
 class OrderController extends Controller
 {
+    public function __construct(private PaystackClient $paystack)
+    {
+    }
+
     public function index(Request $request): View
     {
         $tab = $request->string('tab')->value() ?: 'all';
@@ -60,9 +68,36 @@ class OrderController extends Controller
 
     public function refund(Order $order): RedirectResponse
     {
+        if ($order->status !== 'paid') {
+            return back()->withErrors(['refund' => 'Only paid orders can be refunded.']);
+        }
+
+        // Demo/seeded orders have no real gateway charge behind them — skip straight to the local flip.
+        if ($order->gateway_reference && $order->payment_gateway) {
+            try {
+                match ($order->payment_gateway) {
+                    'stripe' => $this->refundViaStripe($order),
+                    'paystack' => $this->paystack->refund($order->gateway_reference),
+                    default => null,
+                };
+            } catch (\Throwable $e) {
+                report($e);
+
+                return back()->withErrors(['refund' => 'The payment gateway rejected the refund: '.$e->getMessage()]);
+            }
+        }
+
         $order->update(['status' => 'refunded']);
         AuditLog::record('order.refunded', $order);
 
         return back()->with('status', $order->order_number.' refunded.');
+    }
+
+    private function refundViaStripe(Order $order): void
+    {
+        Stripe::setApiKey(config('services.stripe.secret'));
+
+        $session = StripeCheckoutSession::retrieve($order->gateway_reference);
+        StripeRefund::create(['payment_intent' => $session->payment_intent]);
     }
 }

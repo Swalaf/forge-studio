@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Author;
 use App\Http\Controllers\Controller;
 use App\Models\AuditLog;
 use App\Models\Ticket;
+use App\Notifications\TicketReplied;
 use App\Support\Nav;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -60,9 +61,11 @@ class SupportController extends Controller
     {
         $this->authorize('reply', $ticket);
         $data = $request->validate(['body' => ['required', 'string']]);
-        $ticket->messages()->create(['author_id' => $request->user()->id, 'body' => $data['body']]);
+        $message = $ticket->messages()->create(['author_id' => $request->user()->id, 'body' => $data['body']]);
         $ticket->update(['status' => 'waiting']);
         AuditLog::record('ticket.replied', $ticket);
+
+        $ticket->opener->notify(new TicketReplied($message));
 
         return back()->with('status', 'Reply sent.');
     }

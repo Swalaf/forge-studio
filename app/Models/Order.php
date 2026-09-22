@@ -12,7 +12,13 @@ class Order extends Model
     protected $fillable = [
         'order_number', 'customer_id', 'type', 'status', 'payment_method',
         'subtotal_cents', 'tax_cents', 'total_cents',
+        'currency', 'payment_gateway', 'gateway_reference', 'paid_at',
     ];
+
+    protected function casts(): array
+    {
+        return ['paid_at' => 'datetime'];
+    }
 
     protected static function booted(): void
     {

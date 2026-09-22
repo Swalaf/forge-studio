@@ -118,7 +118,7 @@
                 @endif
             </div>
             <div style="font-size:12.5px;color:var(--muted)">Regular license · 6 months support · lifetime updates</div>
-            <button class="btn btn-dark btn-block" style="height:50px;margin-top:18px">Buy now — {{ $product->priceFormatted() }}</button>
+            <a href="{{ route('checkout.create', $product) }}" class="btn btn-dark btn-block" style="height:50px;margin-top:18px">Buy now — {{ $product->priceFormatted() }}</a>
             @if ($product->demo_url)
                 <a href="{{ $product->demo_url }}" class="btn btn-outline btn-block" style="height:46px;margin-top:10px">Live demo ↗</a>
             @endif
