@@ -234,6 +234,35 @@ h1, h2, h3, p { margin: 0; }
 .auth-wrap { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px; }
 .auth-card { width: 100%; max-width: 400px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-xl); padding: 32px; }
 
+/* ---------- Split auth (sign in / sign up) ---------- */
+.auth-split { min-height: 100vh; display: flex; flex-wrap: wrap; background: var(--ink); }
+.auth-hero { flex: 1 1 420px; min-width: 0; position: relative; overflow: hidden; color: #fff; padding: clamp(28px, 4vw, 56px); display: flex; flex-direction: column; justify-content: space-between; gap: 34px; }
+.auth-hero::before { content: ''; position: absolute; inset: 0; background: radial-gradient(760px 420px at 20% 0%, oklch(0.52 0.17 268 / 0.42), transparent 70%); }
+.auth-hero > * { position: relative; }
+.auth-hero h1 { font-size: clamp(28px, 3.6vw, 42px); line-height: 1.08; letter-spacing: -0.035em; font-weight: 800; max-width: 20ch; }
+.auth-hero p { margin-top: 16px; font-size: 15.5px; line-height: 1.65; color: #B9C0D0; max-width: 50ch; }
+.perk-card { display: flex; gap: 12px; align-items: flex-start; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); border-radius: 13px; padding: 13px 15px; }
+.perk-card .title { font-size: 13.5px; font-weight: 650; }
+.perk-card .note { font-size: 12.5px; color: #A8B0C4; margin-top: 3px; line-height: 1.5; }
+.auth-stat .v { font-size: 20px; font-weight: 800; }
+.auth-stat .k { font-family: var(--font-mono); font-size: 9.5px; letter-spacing: 0.1em; text-transform: uppercase; color: #7A8296; margin-top: 3px; }
+
+.auth-panel { flex: 1 1 480px; min-width: 0; background: var(--bg); padding: clamp(22px, 3.4vw, 48px); display: flex; align-items: center; justify-content: center; }
+.auth-panel-inner { width: 100%; max-width: 460px; }
+.auth-tabs { display: flex; background: var(--border-soft); border-radius: 12px; padding: 4px; gap: 4px; }
+.auth-tab { flex: 1; height: 38px; border: none; border-radius: 9px; cursor: pointer; font-size: 13.5px; font-weight: 700; background: transparent; color: var(--muted); }
+.auth-tab.is-active { background: #fff; color: var(--ink); box-shadow: 0 1px 3px rgba(11,15,25,0.12); }
+
+.role-picks { display: grid; grid-template-columns: repeat(auto-fit, minmax(118px, 1fr)); gap: 8px; margin-top: 10px; }
+.role-pick { text-align: left; border-radius: 12px; padding: 11px 12px; cursor: pointer; border: 1px solid #DCDFE7; background: #fff; color: #39404F; }
+.role-pick .lbl { display: flex; align-items: center; gap: 7px; font-size: 13px; font-weight: 700; }
+.role-pick .note { font-size: 11.5px; margin-top: 5px; display: block; opacity: 0.72; line-height: 1.4; }
+.role-pick.is-active { border-color: var(--ink); background: var(--ink); color: #fff; }
+
+.oauth-btn { height: 44px; border-radius: 11px; border: 1px solid #DCDFE7; background: #fff; font-size: 13px; font-weight: 650; cursor: not-allowed; color: var(--muted); display: flex; align-items: center; justify-content: center; gap: 8px; opacity: 0.6; }
+.demo-account-btn { display: flex; align-items: center; gap: 11px; width: 100%; text-align: left; border: 1px solid #EEF0F4; background: #FCFCFD; border-radius: 12px; padding: 10px 12px; cursor: pointer; }
+.demo-account-btn:hover { border-color: var(--ink); background: #fff; }
+
 /* ---------- Responsive ---------- */
 @media (max-width: 720px) {
   .dt-head { display: none; }

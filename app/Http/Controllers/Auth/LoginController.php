@@ -12,7 +12,7 @@ class LoginController extends Controller
 {
     public function create(): View
     {
-        return view('auth.login');
+        return view('auth.index', ['mode' => 'signin']);
     }
 
     public function store(Request $request): RedirectResponse
