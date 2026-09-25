@@ -20,7 +20,9 @@ class LicenseController extends Controller
             'title' => $l->license_key, 'meta' => $l->domain ?? 'Not registered',
             'b' => $l->product->title, 'c' => $l->support_until?->format('d M Y') ?? '—',
             'status' => str($l->status)->headline(),
-            'tone' => match ($l->status) { 'active' => 'ok', 'expiring' => 'wait', 'lapsed' => 'info', 'revoked' => 'bad', default => 'info' },
+            'tone' => match ($l->status) {
+                'active' => 'ok', 'expiring' => 'wait', 'lapsed' => 'info', 'revoked' => 'bad', default => 'info'
+            },
             'primary' => in_array($l->status, ['expiring', 'lapsed'])
                 ? ['label' => 'Renew', 'url' => route('account.licenses.renew', $l), 'method' => 'POST']
                 : null,

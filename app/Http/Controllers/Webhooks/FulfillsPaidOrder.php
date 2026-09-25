@@ -32,6 +32,26 @@ class FulfillsPaidOrder
                     continue;
                 }
 
+                $product = $item->product()->lockForUpdate()->first();
+
+                if (! $product) {
+                    continue;
+                }
+
+                if ($product->isAcquisition()) {
+                    if ($product->acquisition_status === 'sold') {
+                        continue;
+                    }
+
+                    $product->update([
+                        'acquisition_status' => 'pending_transfer',
+                        'sold_to_user_id' => $locked->customer_id,
+                        'sales_count' => $product->sales_count + 1,
+                    ]);
+
+                    continue;
+                }
+
                 License::create([
                     'order_item_id' => $item->id,
                     'product_id' => $item->product_id,
@@ -42,7 +62,7 @@ class FulfillsPaidOrder
                     'status' => 'active',
                 ]);
 
-                $item->product()->increment('sales_count');
+                $product->increment('sales_count');
             }
 
             return true;

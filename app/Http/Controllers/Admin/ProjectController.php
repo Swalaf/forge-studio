@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\AuditLog;
+use App\Models\ProjectMilestone;
 use App\Models\ServiceProject;
 use App\Support\Nav;
 use Illuminate\Http\RedirectResponse;
@@ -63,7 +64,7 @@ class ProjectController extends Controller
         return back()->with('status', 'Project updated.');
     }
 
-    public function updateMilestone(Request $request, ServiceProject $project, \App\Models\ProjectMilestone $milestone): RedirectResponse
+    public function updateMilestone(Request $request, ServiceProject $project, ProjectMilestone $milestone): RedirectResponse
     {
         $data = $request->validate([
             'status' => ['required', 'in:upcoming,in_progress,done'],

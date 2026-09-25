@@ -6,14 +6,13 @@ use App\Models\Review;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
+use Illuminate\Support\Str;
 
 class ReviewReplied extends Notification
 {
     use Queueable;
 
-    public function __construct(public Review $review)
-    {
-    }
+    public function __construct(public Review $review) {}
 
     public function via(object $notifiable): array
     {
@@ -25,7 +24,7 @@ class ReviewReplied extends Notification
         return (new MailMessage)
             ->subject('The author replied to your review of '.$this->review->product->title)
             ->greeting('You got a reply to your review')
-            ->line('Your review: "'.\Illuminate\Support\Str::limit($this->review->body, 120).'"')
+            ->line('Your review: "'.Str::limit($this->review->body, 120).'"')
             ->line('Reply: '.$this->review->reply_body)
             ->action('View product', route('market.show', $this->review->product));
     }

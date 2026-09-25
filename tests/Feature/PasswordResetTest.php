@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\User;
 use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Password;
 use Tests\TestCase;
@@ -35,6 +36,6 @@ class PasswordResetTest extends TestCase
             'password_confirmation' => 'new-secure-password',
         ])->assertRedirect(route('login'));
 
-        $this->assertTrue(\Illuminate\Support\Facades\Hash::check('new-secure-password', $user->fresh()->password));
+        $this->assertTrue(Hash::check('new-secure-password', $user->fresh()->password));
     }
 }

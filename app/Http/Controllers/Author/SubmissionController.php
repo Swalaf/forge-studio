@@ -29,7 +29,9 @@ class SubmissionController extends Controller
             'b' => $v->type === 'new' ? 'New product' : 'Version update',
             'c' => $v->submitted_at?->format('d M Y'),
             'status' => str($v->status)->headline(),
-            'tone' => match ($v->status) { 'approved' => 'ok', 'pending' => 'wait', 'changes_requested' => 'wait', 'rejected' => 'bad', default => 'info' },
+            'tone' => match ($v->status) {
+                'approved' => 'ok', 'pending' => 'wait', 'changes_requested' => 'wait', 'rejected' => 'bad', default => 'info'
+            },
             'primary' => ['label' => 'Open', 'url' => route('author.submissions.show', $v)],
         ]);
 

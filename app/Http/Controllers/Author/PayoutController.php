@@ -18,7 +18,9 @@ class PayoutController extends Controller
             'b' => $p->period_end->format('M Y'),
             'c' => '$'.number_format($p->amount_cents / 100, 0),
             'status' => str($p->status)->headline(),
-            'tone' => match ($p->status) { 'paid' => 'ok', 'scheduled' => 'accent', 'on_hold' => 'wait', 'failed' => 'bad', default => 'info' },
+            'tone' => match ($p->status) {
+                'paid' => 'ok', 'scheduled' => 'accent', 'on_hold' => 'wait', 'failed' => 'bad', default => 'info'
+            },
         ]);
 
         return view('dashboard.table', [

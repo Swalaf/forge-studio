@@ -32,7 +32,9 @@ class ProductController extends Controller
             'b' => $p->priceFormatted(),
             'c' => (string) $p->sales_count,
             'status' => str($p->status)->headline(),
-            'tone' => match ($p->status) { 'live' => 'ok', 'draft', 'scheduled' => 'info', 'changes_requested', 'in_review' => 'wait', 'rejected', 'hidden' => 'bad', default => 'info' },
+            'tone' => match ($p->status) {
+                'live' => 'ok', 'draft', 'scheduled' => 'info', 'changes_requested', 'in_review' => 'wait', 'rejected', 'hidden' => 'bad', default => 'info'
+            },
             'primary' => ['label' => 'Edit', 'url' => route('admin.products.edit', $p)],
             'secondary' => $p->status === 'live'
                 ? ['label' => 'Hide', 'url' => route('admin.products.hide', $p), 'method' => 'POST']

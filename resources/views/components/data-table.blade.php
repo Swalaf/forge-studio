@@ -86,7 +86,7 @@
         @endif
 
         @isset($pagination)
-            <div style="padding:13px 18px">{{ $pagination }}</div>
+            <div style="padding:13px 18px">{!! $pagination !!}</div>
         @endisset
     </div>
 

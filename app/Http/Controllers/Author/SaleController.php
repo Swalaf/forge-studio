@@ -20,7 +20,9 @@ class SaleController extends Controller
             'b' => $i->product?->title ?? $i->description,
             'c' => '$'.number_format($i->author_share_cents / 100, 2),
             'status' => str($i->order->status)->headline(),
-            'tone' => match ($i->order->status) { 'paid' => 'ok', 'refunded' => 'bad', default => 'wait' },
+            'tone' => match ($i->order->status) {
+                'paid' => 'ok', 'refunded' => 'bad', default => 'wait'
+            },
         ]);
 
         return view('dashboard.table', [

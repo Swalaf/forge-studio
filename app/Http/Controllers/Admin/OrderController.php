@@ -16,9 +16,7 @@ use Stripe\Stripe;
 
 class OrderController extends Controller
 {
-    public function __construct(private PaystackClient $paystack)
-    {
-    }
+    public function __construct(private PaystackClient $paystack) {}
 
     public function index(Request $request): View
     {
@@ -38,7 +36,9 @@ class OrderController extends Controller
             'b' => $o->customer->company ?: $o->customer->name,
             'c' => $o->totalFormatted(),
             'status' => str($o->status)->headline(),
-            'tone' => match ($o->status) { 'paid' => 'ok', 'pending' => 'wait', 'refunded' => 'info', 'disputed' => 'bad', default => 'info' },
+            'tone' => match ($o->status) {
+                'paid' => 'ok', 'pending' => 'wait', 'refunded' => 'info', 'disputed' => 'bad', default => 'info'
+            },
             'primary' => ['label' => 'View', 'url' => route('admin.orders.show', $o)],
         ]);
 

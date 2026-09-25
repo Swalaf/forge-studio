@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Author\AcquisitionController;
 use App\Http\Controllers\Author\AnalyticsController;
 use App\Http\Controllers\Author\OverviewController;
 use App\Http\Controllers\Author\PayoutController;
@@ -13,6 +14,13 @@ use Illuminate\Support\Facades\Route;
 
 Route::prefix('author')->name('author.')->middleware(['auth', 'role:author'])->group(function () {
     Route::get('/', OverviewController::class)->name('overview');
+
+    Route::get('/acquisitions', [AcquisitionController::class, 'index'])->name('acquisitions.index');
+    Route::get('/acquisitions/create', [AcquisitionController::class, 'create'])->name('acquisitions.create');
+    Route::post('/acquisitions', [AcquisitionController::class, 'store'])->name('acquisitions.store');
+    Route::get('/acquisitions/{product}/edit', [AcquisitionController::class, 'edit'])->name('acquisitions.edit');
+    Route::put('/acquisitions/{product}', [AcquisitionController::class, 'update'])->name('acquisitions.update');
+    Route::post('/acquisitions/offers/{offer}/respond', [AcquisitionController::class, 'respondToOffer'])->name('acquisitions.offers.respond');
 
     Route::get('/products', [ProductController::class, 'index'])->name('products.index');
     Route::get('/products/create', [ProductController::class, 'create'])->name('products.create');

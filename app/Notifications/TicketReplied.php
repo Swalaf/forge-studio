@@ -11,9 +11,7 @@ class TicketReplied extends Notification
 {
     use Queueable;
 
-    public function __construct(public TicketMessage $message)
-    {
-    }
+    public function __construct(public TicketMessage $message) {}
 
     public function via(object $notifiable): array
     {

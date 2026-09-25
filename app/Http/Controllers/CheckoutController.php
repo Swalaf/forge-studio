@@ -14,13 +14,12 @@ use Stripe\Stripe;
 
 class CheckoutController extends Controller
 {
-    public function __construct(private PaystackClient $paystack)
-    {
-    }
+    public function __construct(private PaystackClient $paystack) {}
 
     public function create(Product $product): View
     {
         abort_unless($product->status === 'live', 404);
+        abort_if($product->isAcquisition() && $product->acquisition_status === 'sold', 404);
 
         return view('market.checkout', ['product' => $product]);
     }
@@ -28,23 +27,32 @@ class CheckoutController extends Controller
     public function store(Request $request, Product $product): RedirectResponse
     {
         abort_unless($product->status === 'live', 404);
+        abort_if($product->isAcquisition() && $product->acquisition_status === 'sold', 404);
 
         $data = $request->validate([
-            'license_type' => ['required', 'in:regular,extended'],
+            'license_type' => [$product->isAcquisition() ? 'nullable' : 'required', 'in:regular,extended,acquisition'],
             'gateway' => ['required', 'in:stripe,paystack'],
         ]);
+
+        if ($product->isAcquisition()) {
+            $data['license_type'] = 'acquisition';
+        }
 
         if ($data['license_type'] === 'extended' && ! $product->extended_price_cents) {
             return back()->withErrors(['license_type' => 'Extended license is not available for this product.']);
         }
 
-        $priceCents = $data['license_type'] === 'extended' ? $product->extended_price_cents : $product->price_cents;
+        $priceCents = match ($data['license_type']) {
+            'acquisition' => $product->asking_price_cents ?? $product->price_cents,
+            'extended' => $product->extended_price_cents,
+            default => $product->price_cents,
+        };
         $currency = $data['gateway'] === 'stripe' ? config('services.stripe.currency') : config('services.paystack.currency');
         $commissionPct = 100 - $product->author->commission_pct;
 
         $order = Order::create([
             'customer_id' => $request->user()->id,
-            'type' => 'product',
+            'type' => $product->isAcquisition() ? 'acquisition' : 'product',
             'status' => 'pending',
             'payment_method' => $data['gateway'],
             'payment_gateway' => $data['gateway'],
@@ -99,7 +107,7 @@ class CheckoutController extends Controller
             ]],
             'metadata' => ['order_id' => $order->id],
             'success_url' => route('checkout.success', $order),
-            'cancel_url' => route('market.show', $product),
+            'cancel_url' => $product->isAcquisition() ? route('acquisitions.show', $product) : route('market.show', $product),
         ]);
 
         $order->update(['gateway_reference' => $session->id]);

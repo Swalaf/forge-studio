@@ -30,7 +30,9 @@ class TicketController extends Controller
             'b' => $t->product?->title ?? 'General',
             'c' => $t->updated_at->diffForHumans(),
             'status' => str($t->status)->headline(),
-            'tone' => match ($t->status) { 'solved' => 'ok', 'open' => 'info', 'waiting' => 'wait', 'breaching' => 'bad', default => 'info' },
+            'tone' => match ($t->status) {
+                'solved' => 'ok', 'open' => 'info', 'waiting' => 'wait', 'breaching' => 'bad', default => 'info'
+            },
             'primary' => ['label' => 'Open', 'url' => route('admin.tickets.show', $t)],
         ]);
 

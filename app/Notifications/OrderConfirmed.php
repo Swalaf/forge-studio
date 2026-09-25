@@ -11,9 +11,7 @@ class OrderConfirmed extends Notification
 {
     use Queueable;
 
-    public function __construct(public Order $order)
-    {
-    }
+    public function __construct(public Order $order) {}
 
     public function via(object $notifiable): array
     {

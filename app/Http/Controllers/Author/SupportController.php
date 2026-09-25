@@ -30,7 +30,9 @@ class SupportController extends Controller
             'title' => $t->subject, 'meta' => $t->product->title,
             'b' => $t->opener->name, 'c' => $t->updated_at->diffForHumans(),
             'status' => str($t->status)->headline(),
-            'tone' => match ($t->status) { 'solved' => 'ok', 'breaching' => 'bad', 'waiting' => 'info', default => 'wait' },
+            'tone' => match ($t->status) {
+                'solved' => 'ok', 'breaching' => 'bad', 'waiting' => 'info', default => 'wait'
+            },
             'primary' => ['label' => 'Reply', 'url' => route('author.support.show', $t)],
         ]);
 

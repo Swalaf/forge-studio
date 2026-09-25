@@ -17,5 +17,5 @@
         <p style="padding:16px 20px;color:var(--muted)">Nothing logged yet.</p>
     @endforelse
 </div>
-<div style="margin-top:16px">{{ $logs->links() }}</div>
+<div style="margin-top:16px">{!! $logs->links() !!}</div>
 @endsection

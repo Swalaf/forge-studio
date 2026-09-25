@@ -23,7 +23,9 @@ class ServiceRequestController extends Controller
             'b' => $r->budget_range ? str($r->budget_range)->headline() : '—',
             'c' => $r->contact_email ?? $r->customer?->email ?? '',
             'status' => str($r->status)->headline(),
-            'tone' => match ($r->status) { 'open' => 'wait', 'quoted' => 'accent', 'accepted' => 'ok', 'declined' => 'bad', default => 'info' },
+            'tone' => match ($r->status) {
+                'open' => 'wait', 'quoted' => 'accent', 'accepted' => 'ok', 'declined' => 'bad', default => 'info'
+            },
             'primary' => $r->status === 'open' ? ['label' => 'Convert to project', 'url' => route('admin.requests.convert', $r), 'method' => 'POST'] : null,
             'secondary' => $r->status === 'open' ? ['label' => 'Decline', 'url' => route('admin.requests.decline', $r), 'method' => 'POST'] : null,
         ]);

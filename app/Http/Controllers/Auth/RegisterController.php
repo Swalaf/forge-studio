@@ -13,9 +13,12 @@ use Illuminate\View\View;
 
 class RegisterController extends Controller
 {
-    public function create(): View
+    public function create(Request $request): View
     {
-        return view('auth.index', ['mode' => 'signup']);
+        return view('auth.index', [
+            'mode' => 'signup',
+            'role' => in_array($request->query('role'), ['customer', 'author', 'admin'], true) ? $request->query('role') : 'customer',
+        ]);
     }
 
     public function store(Request $request): RedirectResponse

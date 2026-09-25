@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\AcquisitionController;
 use App\Http\Controllers\Admin\AuditLogController;
 use App\Http\Controllers\Admin\AuthorController;
 use App\Http\Controllers\Admin\ContentController;
@@ -18,6 +19,13 @@ use Illuminate\Support\Facades\Route;
 
 Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin'])->group(function () {
     Route::get('/', OverviewController::class)->name('overview');
+
+    Route::get('/acquisitions', [AcquisitionController::class, 'index'])->name('acquisitions.index');
+    Route::get('/acquisitions/{product}', [AcquisitionController::class, 'show'])->name('acquisitions.show');
+    Route::post('/acquisitions/{product}/approve', [AcquisitionController::class, 'approve'])->name('acquisitions.approve');
+    Route::post('/acquisitions/{product}/hide', [AcquisitionController::class, 'hide'])->name('acquisitions.hide');
+    Route::post('/acquisitions/{product}/close-auction', [AcquisitionController::class, 'closeAuction'])->name('acquisitions.close-auction');
+    Route::post('/acquisitions/{product}/transfer', [AcquisitionController::class, 'updateTransfer'])->name('acquisitions.transfer');
 
     Route::get('/review', [ReviewQueueController::class, 'index'])->name('review.index');
     Route::get('/review/{productVersion}', [ReviewQueueController::class, 'show'])->name('review.show');

@@ -65,7 +65,7 @@
                 </div>
             @endif
 
-            <div style="margin-top:22px">{{ $products->links() }}</div>
+            <div style="margin-top:22px">{!! $products->links() !!}</div>
 
             <div style="margin-top:22px;background:#0B0F19;border-radius:18px;padding:24px 28px;display:flex;align-items:center;gap:24px;flex-wrap:wrap;color:#fff">
                 <div style="flex:1;min-width:260px">

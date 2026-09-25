@@ -11,23 +11,23 @@ class MarketController extends Controller
 {
     public function home(): View
     {
-        $featured = Product::live()->where('is_featured', true)->with('author')->latest('published_at')->take(3)->get();
-        $popular = Product::live()->with('author')->orderByDesc('sales_count')->take(5)->get();
-        $releases = Product::live()->with('author')->latest('published_at')->take(4)->get();
-        $categories = Category::withCount(['products' => fn ($q) => $q->live()])->orderBy('name')->get();
+        $featured = Product::software()->live()->where('is_featured', true)->with('author')->latest('published_at')->take(3)->get();
+        $popular = Product::software()->live()->with('author')->orderByDesc('sales_count')->take(5)->get();
+        $releases = Product::software()->live()->with('author')->latest('published_at')->take(4)->get();
+        $categories = Category::withCount(['products' => fn ($q) => $q->software()->live()])->orderBy('name')->get();
 
         return view('market.home', [
             'featured' => $featured,
             'popular' => $popular,
             'releases' => $releases,
             'categories' => $categories,
-            'totalLive' => Product::live()->count(),
+            'totalLive' => Product::software()->live()->count(),
         ]);
     }
 
     public function browse(Request $request): View
     {
-        $query = Product::live()->with(['author', 'category']);
+        $query = Product::software()->live()->with(['author', 'category']);
 
         if ($search = $request->string('q')->trim()->value()) {
             $query->where(fn ($q) => $q->where('title', 'like', "%{$search}%")->orWhere('tagline', 'like', "%{$search}%"));
@@ -46,7 +46,7 @@ class MarketController extends Controller
         };
 
         $products = $query->paginate(12)->withQueryString();
-        $categories = Category::withCount(['products' => fn ($q) => $q->live()])->orderBy('name')->get();
+        $categories = Category::withCount(['products' => fn ($q) => $q->software()->live()])->orderBy('name')->get();
 
         return view('market.browse', [
             'products' => $products,
@@ -58,7 +58,7 @@ class MarketController extends Controller
 
     public function show(Product $product): View
     {
-        abort_unless($product->status === 'live', 404);
+        abort_unless($product->status === 'live' && $product->listing_type === 'software', 404);
 
         $product->increment('view_count');
         $product->load(['author', 'category', 'media']);

@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AcquisitionController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\PasswordResetController;
 use App\Http\Controllers\Auth\RegisterController;
@@ -9,11 +10,15 @@ use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\ServiceRequestController;
 use App\Http\Controllers\Webhooks\PaystackWebhookController;
 use App\Http\Controllers\Webhooks\StripeWebhookController;
+use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', [MarketController::class, 'home'])->name('home');
 Route::get('/market', [MarketController::class, 'browse'])->name('market.browse');
 Route::get('/market/{product:slug}', [MarketController::class, 'show'])->name('market.show');
+
+Route::get('/acquisitions', [AcquisitionController::class, 'index'])->name('acquisitions.index');
+Route::get('/acquisitions/{product:slug}', [AcquisitionController::class, 'show'])->name('acquisitions.show');
 
 Route::get('/hire-us', [ServiceRequestController::class, 'create'])->name('hire-us');
 Route::post('/hire-us', [ServiceRequestController::class, 'store'])->name('hire-us.store');
@@ -25,12 +30,14 @@ Route::post('/market/{product:slug}/reviews', [ReviewController::class, 'store']
 Route::middleware(['auth', 'role:customer'])->group(function () {
     Route::get('/market/{product:slug}/checkout', [CheckoutController::class, 'create'])->name('checkout.create');
     Route::post('/market/{product:slug}/checkout', [CheckoutController::class, 'store'])->name('checkout.store');
+    Route::post('/acquisitions/{product:slug}/offers', [AcquisitionController::class, 'offer'])->name('acquisitions.offers.store');
+    Route::post('/acquisitions/{product:slug}/bids', [AcquisitionController::class, 'bid'])->name('acquisitions.bids.store');
 });
 Route::get('/checkout/{order}/success', [CheckoutController::class, 'success'])->middleware('auth')->name('checkout.success');
 
 // Gateways call these directly — no CSRF, verified by signature instead.
-Route::post('/webhooks/stripe', StripeWebhookController::class)->withoutMiddleware(\Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class)->name('webhooks.stripe');
-Route::post('/webhooks/paystack', PaystackWebhookController::class)->withoutMiddleware(\Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class)->name('webhooks.paystack');
+Route::post('/webhooks/stripe', StripeWebhookController::class)->withoutMiddleware(VerifyCsrfToken::class)->name('webhooks.stripe');
+Route::post('/webhooks/paystack', PaystackWebhookController::class)->withoutMiddleware(VerifyCsrfToken::class)->name('webhooks.paystack');
 
 Route::middleware('guest')->group(function () {
     Route::get('/login', [LoginController::class, 'create'])->name('login');

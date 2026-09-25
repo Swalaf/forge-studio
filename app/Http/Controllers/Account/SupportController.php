@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Account;
 
 use App\Http\Controllers\Controller;
-use App\Models\Product;
 use App\Models\Ticket;
 use App\Notifications\TicketReplied;
 use App\Support\Nav;
@@ -29,7 +28,9 @@ class SupportController extends Controller
             'title' => $t->subject, 'meta' => $t->product?->title ?? 'General',
             'b' => $t->product?->title ?? '—', 'c' => $t->updated_at->diffForHumans(),
             'status' => str($t->status)->headline(),
-            'tone' => match ($t->status) { 'solved' => 'ok', 'breaching' => 'bad', 'waiting' => 'info', default => 'wait' },
+            'tone' => match ($t->status) {
+                'solved' => 'ok', 'breaching' => 'bad', 'waiting' => 'info', default => 'wait'
+            },
             'primary' => ['label' => 'Open', 'url' => route('account.support.show', $t)],
         ]);
 

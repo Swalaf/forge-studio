@@ -48,7 +48,7 @@
         :panel-action="$panelAction ?? null"
     >
         @isset($pagination)
-            <x-slot:pagination>{{ $pagination }}</x-slot:pagination>
+            <x-slot:pagination>{!! $pagination !!}</x-slot:pagination>
         @endisset
     </x-data-table>
 @endif

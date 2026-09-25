@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Account\AcquisitionController;
 use App\Http\Controllers\Account\DownloadController;
 use App\Http\Controllers\Account\InvoiceController;
 use App\Http\Controllers\Account\LicenseController;
@@ -13,6 +14,8 @@ use Illuminate\Support\Facades\Route;
 
 Route::prefix('account')->name('account.')->middleware(['auth', 'role:customer'])->group(function () {
     Route::get('/', OverviewController::class)->name('overview');
+
+    Route::get('/acquisitions', [AcquisitionController::class, 'index'])->name('acquisitions.index');
 
     Route::get('/purchases', [PurchaseController::class, 'index'])->name('purchases.index');
 

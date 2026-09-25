@@ -101,6 +101,58 @@ replies (including the cross-author 403 case), a customer can't view another cus
 password reset end-to-end, and order fulfillment (license creation, notification, and idempotency
 against a duplicate webhook delivery).
 
+## Production environment
+
+Use `.env.production.example` as the production checklist. Copy it to the real host as `.env`, then
+replace every placeholder with provider-specific values before exposing the site publicly:
+
+```bash
+cp .env.production.example .env
+php artisan key:generate --force
+php artisan migrate --force --seed
+php artisan storage:link
+php artisan optimize
+php artisan app:production-readiness-check
+```
+
+Minimum required live values:
+
+- `APP_URL`: the final HTTPS domain.
+- `APP_KEY`: generated on the production host and never committed.
+- `DB_*`: a managed MySQL, MariaDB, or PostgreSQL database with backups enabled.
+- `MAIL_*`: a real SMTP/Postmark/SES/Resend sender for password resets and notifications.
+- `STRIPE_*`: live Stripe keys plus a webhook endpoint for `{APP_URL}/webhooks/stripe` with the
+  `checkout.session.completed` event.
+- `PAYSTACK_*`: live Paystack keys plus a webhook endpoint for `{APP_URL}/webhooks/paystack`.
+- `SESSION_DOMAIN`: the production root domain, e.g. `.example.com`.
+
+Run these release commands on every deployment after dependencies are installed and assets are built:
+
+```bash
+composer install --no-dev --prefer-dist --optimize-autoloader --no-interaction
+npm ci
+npm run build
+php artisan migrate --force
+php artisan optimize
+php artisan queue:restart
+php artisan app:production-readiness-check
+```
+
+Run one or more queue workers in production because checkout fulfillment, mail, and dashboard work use
+the database queue:
+
+```bash
+php artisan queue:work database --tries=3 --backoff=10 --max-time=3600
+```
+
+Recommended server hardening:
+
+- Point the web server document root to `public/` only.
+- Enforce HTTPS and install a valid TLS certificate.
+- Configure recurring database and uploaded-file backups.
+- Monitor `/up`, queue worker health, failed jobs, logs, disk space, and payment webhook failures.
+- Keep `.env` private and never commit production secrets.
+
 ## Production seeding
 
 `php artisan migrate --seed` is environment-aware: with `APP_ENV=production` it skips the fake

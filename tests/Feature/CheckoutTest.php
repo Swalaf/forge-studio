@@ -3,9 +3,11 @@
 namespace Tests\Feature;
 
 use App\Http\Controllers\Webhooks\FulfillsPaidOrder;
+use App\Models\License;
 use App\Models\Order;
 use App\Models\Product;
 use App\Models\User;
+use App\Notifications\OrderConfirmed;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
 use Tests\TestCase;
@@ -64,7 +66,7 @@ class CheckoutTest extends TestCase
         $this->assertNotNull($order->fresh()->paid_at);
         $this->assertSame(1, $product->fresh()->sales_count);
         $this->assertDatabaseHas('licenses', ['product_id' => $product->id, 'customer_id' => $customer->id, 'status' => 'active']);
-        Notification::assertSentTo($customer, \App\Notifications\OrderConfirmed::class);
+        Notification::assertSentTo($customer, OrderConfirmed::class);
     }
 
     public function test_fulfillment_is_idempotent_for_a_duplicate_webhook(): void
@@ -92,6 +94,6 @@ class CheckoutTest extends TestCase
         $fulfiller->handle($order->fresh()); // simulate the gateway retrying the same webhook
 
         $this->assertSame(1, $product->fresh()->sales_count);
-        $this->assertSame(1, \App\Models\License::where('product_id', $product->id)->count());
+        $this->assertSame(1, License::where('product_id', $product->id)->count());
     }
 }

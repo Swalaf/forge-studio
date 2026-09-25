@@ -9,7 +9,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ asset('css/app.css') }}">
 </head>
-<body data-initial-mode="{{ $mode }}">
+<body data-initial-mode="{{ $mode }}" data-initial-role="{{ $role ?? 'customer' }}">
 
 <div class="auth-split">
     <section class="auth-hero">
@@ -193,7 +193,7 @@
 <script>
 (function () {
     var mode = document.body.dataset.initialMode === 'signup' ? 'signup' : 'signin';
-    var role = 'customer';
+    var role = ['customer', 'author', 'admin'].indexOf(document.body.dataset.initialRole) !== -1 ? document.body.dataset.initialRole : 'customer';
 
     var tabSignin = document.getElementById('tab-signin');
     var tabSignup = document.getElementById('tab-signup');

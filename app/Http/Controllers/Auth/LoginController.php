@@ -10,9 +10,12 @@ use Illuminate\View\View;
 
 class LoginController extends Controller
 {
-    public function create(): View
+    public function create(Request $request): View
     {
-        return view('auth.index', ['mode' => 'signin']);
+        return view('auth.index', [
+            'mode' => 'signin',
+            'role' => in_array($request->query('role'), ['customer', 'author', 'admin'], true) ? $request->query('role') : 'customer',
+        ]);
     }
 
     public function store(Request $request): RedirectResponse

@@ -23,7 +23,9 @@ class PayoutController extends Controller
             'b' => $p->period_end->format('M Y'),
             'c' => '$'.number_format($p->amount_cents / 100, 0),
             'status' => str($p->status)->headline(),
-            'tone' => match ($p->status) { 'paid' => 'ok', 'scheduled' => 'info', 'on_hold' => 'wait', 'failed' => 'bad', default => 'info' },
+            'tone' => match ($p->status) {
+                'paid' => 'ok', 'scheduled' => 'info', 'on_hold' => 'wait', 'failed' => 'bad', default => 'info'
+            },
             'primary' => $p->status === 'on_hold'
                 ? ['label' => 'Release', 'url' => route('admin.payouts.release', $p), 'method' => 'POST']
                 : ($p->status === 'scheduled' ? ['label' => 'Hold', 'url' => route('admin.payouts.hold', $p), 'method' => 'POST'] : null),

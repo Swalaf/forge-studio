@@ -7,7 +7,6 @@ use App\Models\License;
 use App\Models\Order;
 use App\Models\Payout;
 use App\Models\Product;
-use App\Models\ProductVersion;
 use App\Models\ProjectMilestone;
 use App\Models\Review;
 use App\Models\ServiceProject;
@@ -16,6 +15,7 @@ use App\Models\Setting;
 use App\Models\Ticket;
 use App\Models\User;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 
@@ -33,6 +33,7 @@ class DatabaseSeeder extends Seeder
         $categories = $this->seedCategories();
         [$admin, $authors] = $this->seedPeople();
         $products = $this->seedProducts($categories, $authors);
+        $this->seedAcquisitionListings($categories, $authors);
         $this->seedVersions($products, $admin);
         $customer = $this->seedCustomerActivity($products);
         $this->seedPayouts($authors);
@@ -53,7 +54,7 @@ class DatabaseSeeder extends Seeder
         Setting::put('hire_us_headline', 'Need customization, development or installation? Hire us.', 'content');
     }
 
-    private function seedCategories(): \Illuminate\Support\Collection
+    private function seedCategories(): Collection
     {
         $defs = [
             ['SaaS starters', '◈'], ['Scripts', '▤'], ['Mobile apps', '▥'], ['Templates', '▦'],
@@ -104,7 +105,7 @@ class DatabaseSeeder extends Seeder
         return [$admin, $authors];
     }
 
-    private function seedProducts($categories, array $authors): \Illuminate\Support\Collection
+    private function seedProducts($categories, array $authors): Collection
     {
         $byName = $categories->keyBy('name');
         $defs = [
@@ -161,6 +162,86 @@ class DatabaseSeeder extends Seeder
         ]));
 
         return $products;
+    }
+
+    private function seedAcquisitionListings($categories, array $authors): void
+    {
+        $saas = $categories->firstWhere('slug', 'saas-starters');
+        $scripts = $categories->firstWhere('slug', 'scripts');
+        $crm = $categories->firstWhere('slug', 'crm');
+
+        $defs = [
+            [
+                'title' => 'Micro CRM SaaS with 42 paying teams',
+                'slug' => 'micro-crm-saas-acquisition',
+                'category_id' => $crm?->id,
+                'author_id' => $authors['mara']->id,
+                'tagline' => 'Small B2B CRM with recurring revenue, clean Laravel codebase, and documented onboarding.',
+                'description' => 'A focused CRM for boutique agencies with contacts, pipelines, notes, invoices, and a simple Stripe subscription workflow. Includes brand assets, source code, deployment docs, and customer handover notes.',
+                'acquisition_sale_type' => 'fixed_or_offer',
+                'asking_price_cents' => 4800000,
+                'minimum_offer_cents' => 4000000,
+                'monthly_revenue_cents' => 620000,
+                'monthly_profit_cents' => 410000,
+                'monthly_visitors' => 18500,
+                'monthly_pageviews' => 74000,
+                'transfer_assets' => ['Laravel source code', 'Customer list export', 'Stripe product setup guide', 'Brand files', 'Deployment runbook'],
+                'verified_metrics' => ['stripe_mrr' => '$6,200', 'churn' => '3.1%', 'traffic_source' => 'Organic + referrals'],
+            ],
+            [
+                'title' => 'AI Invoice Parser API',
+                'slug' => 'ai-invoice-parser-api-auction',
+                'category_id' => $scripts?->id,
+                'author_id' => $authors['kin']->id,
+                'tagline' => 'Usage-based API with docs, sample clients, and active inbound search traffic.',
+                'description' => 'Invoice extraction API with queue workers, OCR adapter, usage metering, public docs, and sample PHP/Node clients. Best for a buyer who wants a small developer-tool asset to grow.',
+                'acquisition_sale_type' => 'auction',
+                'asking_price_cents' => 1200000,
+                'reserve_price_cents' => 900000,
+                'monthly_revenue_cents' => 180000,
+                'monthly_profit_cents' => 95000,
+                'monthly_visitors' => 9200,
+                'monthly_pageviews' => 31100,
+                'auction_starts_at' => now()->subDay(),
+                'auction_ends_at' => now()->addDays(6),
+                'transfer_assets' => ['API source code', 'Docs site', 'Postman collection', 'Domain transfer', 'Analytics export'],
+                'verified_metrics' => ['api_calls' => '148k/mo', 'paid_accounts' => '19', 'gross_margin' => '52%'],
+            ],
+            [
+                'title' => 'Niche Booking Marketplace Starter',
+                'slug' => 'niche-booking-marketplace-starter',
+                'category_id' => $saas?->id,
+                'author_id' => $authors['studio']->id,
+                'tagline' => 'Pre-revenue marketplace with polished UX, vendor onboarding, and launch content.',
+                'description' => 'A one-time acquisition for a booking marketplace codebase and launch package. No active revenue yet, but includes vendor onboarding funnels, seed content, and growth checklist.',
+                'acquisition_sale_type' => 'offer',
+                'asking_price_cents' => 2400000,
+                'minimum_offer_cents' => 1800000,
+                'monthly_revenue_cents' => 0,
+                'monthly_profit_cents' => 0,
+                'monthly_visitors' => 3300,
+                'monthly_pageviews' => 12100,
+                'transfer_assets' => ['Marketplace source code', 'Landing pages', 'Email sequences', 'Launch checklist', 'Design system'],
+                'verified_metrics' => ['waitlist' => '812 emails', 'vendors_contacted' => '63', 'content_pages' => '44'],
+            ],
+        ];
+
+        foreach ($defs as $definition) {
+            Product::create($definition + [
+                'listing_type' => 'acquisition',
+                'acquisition_status' => 'available',
+                'status' => 'live',
+                'price_cents' => $definition['asking_price_cents'],
+                'seller_disclosures' => 'Seller confirms they own the code and can transfer repository, deployment notes, and listed assets after payment or accepted offer.',
+                'transfer_notes' => 'Forge coordinates repository invitation, domain handoff, environment documentation, and a 7-day transition support window.',
+                'due_diligence_notes' => 'Review source access, revenue screenshots, analytics exports, support obligations, third-party subscriptions, and transfer timeline before committing.',
+                'tech_stack' => ['Laravel', 'MySQL', 'Stripe', 'Tailwind'],
+                'requirements' => ['Hosting' => 'VPS or managed Laravel host', 'Database' => 'MySQL 8+', 'Transfer' => 'GitHub and registrar access'],
+                'published_at' => now()->subDays(random_int(1, 18)),
+                'business_started_on' => now()->subMonths(random_int(8, 30))->toDateString(),
+                'is_featured' => true,
+            ]);
+        }
     }
 
     private function seedVersions($products, User $admin): void

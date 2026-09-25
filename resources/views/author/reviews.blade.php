@@ -34,5 +34,5 @@
         <p style="color:var(--muted)">No reviews yet.</p>
     @endforelse
 </div>
-<div style="margin-top:16px">{{ $reviews->links() }}</div>
+<div style="margin-top:16px">{!! $reviews->links() !!}</div>
 @endsection

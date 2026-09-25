@@ -31,7 +31,9 @@ class ProductController extends Controller
             'title' => $p->title, 'meta' => $p->current_version.' · v'.$p->current_version,
             'b' => $p->priceFormatted(), 'c' => (string) $p->sales_count,
             'status' => str($p->status)->headline(),
-            'tone' => match ($p->status) { 'live' => 'ok', 'draft' => 'info', 'in_review', 'changes_requested' => 'wait', default => 'bad' },
+            'tone' => match ($p->status) {
+                'live' => 'ok', 'draft' => 'info', 'in_review', 'changes_requested' => 'wait', default => 'bad'
+            },
             'primary' => ['label' => 'Edit', 'url' => route('author.products.edit', $p)],
         ]);
 
@@ -55,7 +57,7 @@ class ProductController extends Controller
     {
         return view('author.product-form', [
             'dashTitle' => 'Forge Market', 'dashSub' => 'Author workspace', 'navGroups' => Nav::author('products'),
-            'product' => new Product(), 'categories' => Category::orderBy('name')->get(),
+            'product' => new Product, 'categories' => Category::orderBy('name')->get(),
         ]);
     }
 

@@ -29,7 +29,9 @@ class LicenseController extends Controller
             'b' => $l->product->title,
             'c' => $l->support_until?->format('d M Y') ?? '—',
             'status' => str($l->status)->headline(),
-            'tone' => match ($l->status) { 'active' => 'ok', 'expiring' => 'wait', 'lapsed' => 'info', 'revoked' => 'bad', default => 'info' },
+            'tone' => match ($l->status) {
+                'active' => 'ok', 'expiring' => 'wait', 'lapsed' => 'info', 'revoked' => 'bad', default => 'info'
+            },
             'primary' => $l->status === 'revoked'
                 ? ['label' => 'Restore', 'url' => route('admin.licenses.renew', $l), 'method' => 'POST']
                 : ['label' => 'Revoke', 'url' => route('admin.licenses.revoke', $l), 'method' => 'POST'],

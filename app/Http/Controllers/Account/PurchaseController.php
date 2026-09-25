@@ -18,7 +18,9 @@ class PurchaseController extends Controller
             'b' => $o->items->first()?->license_type ? str($o->items->first()->license_type)->headline() : '—',
             'c' => $o->totalFormatted(),
             'status' => str($o->status)->headline(),
-            'tone' => match ($o->status) { 'paid' => 'ok', 'refunded' => 'info', 'disputed' => 'bad', default => 'wait' },
+            'tone' => match ($o->status) {
+                'paid' => 'ok', 'refunded' => 'info', 'disputed' => 'bad', default => 'wait'
+            },
             'primary' => ['label' => 'Invoice', 'url' => route('account.invoices.show', $o)],
         ]);
 
