@@ -44,7 +44,8 @@ class ProductionSeeder extends Seeder
 
         $email = $this->command?->ask('Admin email', 'admin@'.parse_url(config('app.url'), PHP_URL_HOST) ?: 'example.com')
             ?? 'admin@example.com';
-        $password = Str::password(20);
+        $initialPassword = config('app.initial_admin_password');
+        $password = filled($initialPassword) ? (string) $initialPassword : Str::password(20);
 
         User::create([
             'name' => 'Site Admin',
@@ -54,7 +55,11 @@ class ProductionSeeder extends Seeder
             'standing' => 'good',
         ]);
 
-        $this->command?->warn("Admin created — email: {$email} / password: {$password}");
-        $this->command?->warn('Save that password now — it is only shown here, this once. Change it after first login.');
+        if (filled($initialPassword)) {
+            $this->command?->warn("Admin created — email: {$email}. Change the initial password after first login.");
+        } else {
+            $this->command?->warn("Admin created — email: {$email} / password: {$password}");
+            $this->command?->warn('Save that password now — it is only shown here, this once. Change it after first login.');
+        }
     }
 }

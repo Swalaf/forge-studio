@@ -14,7 +14,7 @@ class LoginController extends Controller
     {
         return view('auth.index', [
             'mode' => 'signin',
-            'role' => in_array($request->query('role'), ['customer', 'author', 'admin'], true) ? $request->query('role') : 'customer',
+            'role' => in_array($request->query('role'), ['customer', 'author'], true) ? $request->query('role') : 'customer',
         ]);
     }
 

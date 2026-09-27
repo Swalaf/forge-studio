@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\Ticket;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
 class AuthPageTest extends TestCase
@@ -63,6 +64,45 @@ class AuthPageTest extends TestCase
         // The test environment is neither local nor staging, so this exercises the same
         // guard that keeps one-click demo logins off a real production deployment.
         $this->get(route('login'))->assertDontSee('Demo accounts');
+    }
+
+    /**
+     * @return array<string, array{string}>
+     */
+    public static function signInRoles(): array
+    {
+        return [
+            'customer form' => ['customer'],
+            'developer form' => ['author'],
+        ];
+    }
+
+    #[DataProvider('signInRoles')]
+    public function test_admin_signs_in_from_a_regular_sign_in_form(string $role): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $this->get(route('login', ['role' => $role]))
+            ->assertSee('data-initial-role="'.$role.'"', false);
+
+        $this->post(route('login'), [
+            'email' => $admin->email, 'password' => 'password',
+        ])->assertRedirect(route('admin.overview'));
+
+        $this->assertAuthenticatedAs($admin);
+    }
+
+    public function test_sign_in_hides_the_admin_choice_even_with_an_admin_role_hint(): void
+    {
+        $this->get(route('login', ['role' => 'admin']))
+            ->assertSee('data-initial-role="customer"', false)
+            ->assertSee('data-role="admin" hidden', false);
+    }
+
+    public function test_sign_up_keeps_the_existing_admin_access_request_choice(): void
+    {
+        $this->get(route('register', ['role' => 'admin']))
+            ->assertSee('data-initial-role="admin"', false)
+            ->assertDontSee('data-role="admin" hidden', false);
     }
 
     public function test_login_throttles_repeated_attempts_for_the_same_account_and_ip(): void

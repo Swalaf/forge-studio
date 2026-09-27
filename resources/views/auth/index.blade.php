@@ -70,7 +70,7 @@
                             <span class="lbl">⌨ Developer</span>
                             <span class="note">Sell your products</span>
                         </button>
-                        <button type="button" class="role-pick" data-role="admin">
+                        <button type="button" class="role-pick" data-role="admin" @if ($mode === 'signin')hidden @endif>
                             <span class="lbl">◈ Studio admin</span>
                             <span class="note">Owner console</span>
                         </button>
@@ -246,7 +246,10 @@
         subheading.textContent = c[1];
         roleLabel.textContent = mode === 'signup' ? 'I want to' : 'Sign in as';
 
-        roleButtons.forEach(function (b) { b.classList.toggle('is-active', b.dataset.role === role); });
+        roleButtons.forEach(function (b) {
+            b.hidden = mode === 'signin' && b.dataset.role === 'admin';
+            b.classList.toggle('is-active', b.dataset.role === role);
+        });
         intendedRoleInput.value = role;
         submitBtn.textContent = submitLabels[role];
         orgLabel.textContent = orgLabels[role][0];
@@ -261,7 +264,11 @@
         }
     }
 
-    tabSignin.addEventListener('click', function () { mode = 'signin'; paint(); });
+    tabSignin.addEventListener('click', function () {
+        mode = 'signin';
+        if (role === 'admin') role = 'customer';
+        paint();
+    });
     tabSignup.addEventListener('click', function () { mode = 'signup'; paint(); });
     roleButtons.forEach(function (b) {
         b.addEventListener('click', function () { role = b.dataset.role; paint(); });

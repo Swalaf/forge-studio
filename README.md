@@ -179,7 +179,11 @@ expose database, PHP-FPM, or queue endpoints publicly.
 On **first installation**, from the project directory, install dependencies
 and create schema. `db:seed` must be run from a **private interactive
 terminal**: it asks for the real administrator email and displays a one-time
-password. Never run it in CI or capture its output in deployment logs. Change
+random password unless you set `INITIAL_ADMIN_PASSWORD` in the private `.env`
+before seeding. A configured password is hashed and never printed by the seeder;
+remove that setting and rebuild the config cache after creating the admin. The
+seeder does not change an existing admin's password. Never run it in CI or
+capture its output in deployment logs. Change
 the seeded `.test` support email in admin settings before launch.
 
 ```bash
