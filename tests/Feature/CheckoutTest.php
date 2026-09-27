@@ -9,7 +9,10 @@ use App\Models\Product;
 use App\Models\User;
 use App\Notifications\OrderConfirmed;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Notifications\SendQueuedNotifications;
 use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Facades\Queue;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class CheckoutTest extends TestCase
@@ -36,7 +39,43 @@ class CheckoutTest extends TestCase
             'price_cents' => 8900, 'status' => 'live',
         ]);
 
-        $this->actingAs($customer)->get(route('checkout.create', $product))->assertOk();
+        $this->actingAs($customer)->get(route('checkout.create', $product))
+            ->assertSee('This release is not available for purchase yet.')
+            ->assertDontSee('Continue to payment');
+    }
+
+    public function test_checkout_rejects_a_release_without_a_private_artifact(): void
+    {
+        Storage::fake('local');
+        $customer = User::factory()->create(['role' => 'customer']);
+        $product = Product::create([
+            'author_id' => User::factory()->create(['role' => 'author'])->id,
+            'title' => 'Nimbus', 'slug' => 'nimbus', 'price_cents' => 8900, 'status' => 'live', 'current_version' => '1.0.0',
+        ]);
+
+        $this->actingAs($customer)->post(route('checkout.store', $product), [
+            'license_type' => 'regular', 'gateway' => 'stripe',
+        ])->assertRedirect()->assertSessionHasErrors('product');
+
+        $this->assertSame(0, Order::count());
+    }
+
+    public function test_checkout_rejects_a_gateway_that_would_charge_a_different_currency(): void
+    {
+        Storage::fake('local');
+        $customer = User::factory()->create(['role' => 'customer']);
+        $product = Product::create([
+            'author_id' => User::factory()->create(['role' => 'author'])->id,
+            'title' => 'Nimbus', 'slug' => 'nimbus', 'price_cents' => 8900, 'status' => 'live', 'current_version' => '1.0.0',
+        ]);
+        Storage::disk('local')->put($product->downloadPath(), 'private release');
+        config()->set('services.paystack.currency', 'NGN');
+
+        $this->actingAs($customer)->post(route('checkout.store', $product), [
+            'license_type' => 'regular', 'gateway' => 'paystack',
+        ])->assertRedirect()->assertSessionHasErrors('gateway');
+
+        $this->assertSame(0, Order::count());
     }
 
     public function test_fulfilling_a_paid_order_creates_a_license_and_notifies_the_customer(): void
@@ -95,5 +134,29 @@ class CheckoutTest extends TestCase
 
         $this->assertSame(1, $product->fresh()->sales_count);
         $this->assertSame(1, License::where('product_id', $product->id)->count());
+    }
+
+    public function test_fulfillment_queues_order_mail_instead_of_sending_it_in_the_webhook(): void
+    {
+        Queue::fake([SendQueuedNotifications::class]);
+        $customer = User::factory()->create(['role' => 'customer']);
+        $product = Product::create([
+            'author_id' => User::factory()->create(['role' => 'author'])->id,
+            'title' => 'Nimbus', 'slug' => 'nimbus', 'price_cents' => 8900, 'status' => 'live',
+        ]);
+        $order = Order::create([
+            'customer_id' => $customer->id, 'type' => 'product', 'status' => 'pending',
+            'payment_gateway' => 'stripe', 'currency' => 'usd',
+            'subtotal_cents' => 8900, 'total_cents' => 8900,
+        ]);
+        $order->items()->create([
+            'product_id' => $product->id, 'description' => $product->title, 'license_type' => 'regular',
+            'unit_price_cents' => 8900, 'commission_cents' => 2670, 'author_share_cents' => 6230,
+        ]);
+
+        app(FulfillsPaidOrder::class)->handle($order);
+
+        $this->assertSame('paid', $order->fresh()->status);
+        Queue::assertPushed(SendQueuedNotifications::class);
     }
 }

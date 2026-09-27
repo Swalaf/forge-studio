@@ -64,4 +64,17 @@ class AuthPageTest extends TestCase
         // guard that keeps one-click demo logins off a real production deployment.
         $this->get(route('login'))->assertDontSee('Demo accounts');
     }
+
+    public function test_login_throttles_repeated_attempts_for_the_same_account_and_ip(): void
+    {
+        for ($attempt = 0; $attempt < 5; $attempt++) {
+            $this->post(route('login'), [
+                'email' => 'throttle@example.com', 'password' => 'incorrect-password',
+            ])->assertSessionHasErrors('email');
+        }
+
+        $this->post(route('login'), [
+            'email' => 'throttle@example.com', 'password' => 'incorrect-password',
+        ])->assertTooManyRequests();
+    }
 }

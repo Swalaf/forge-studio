@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Str;
 
 class Product extends Model
 {
@@ -103,6 +104,11 @@ class Product extends Model
     public function isLive(): bool
     {
         return $this->status === 'live';
+    }
+
+    public function downloadPath(): string
+    {
+        return 'products/'.$this->id.'/'.Str::slug(str_replace('.', '-', (string) $this->current_version)).'.zip';
     }
 
     public function isAcquisition(): bool

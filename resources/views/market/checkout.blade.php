@@ -9,6 +9,9 @@
         <div class="alert alert-error">{{ $errors->first() }}</div>
     @endif
 
+    @if (! $canPurchase)
+        <div class="alert alert-error" style="margin-top:20px">This release is not available for purchase yet. Please contact support.</div>
+    @else
     <form method="POST" action="{{ route('checkout.store', $product) }}" class="card card-pad" style="display:grid;gap:18px;margin-top:20px">
         @csrf
 
@@ -45,14 +48,17 @@
                 <label style="display:flex;align-items:center;gap:10px;border:1px solid #DCDFE7;border-radius:11px;padding:12px 14px;cursor:pointer">
                     <input type="radio" name="gateway" value="stripe" checked> Card via Stripe
                 </label>
-                <label style="display:flex;align-items:center;gap:10px;border:1px solid #DCDFE7;border-radius:11px;padding:12px 14px;cursor:pointer">
-                    <input type="radio" name="gateway" value="paystack"> Card / bank / USSD via Paystack
-                </label>
+                @if (config('services.paystack.secret_key') && strtoupper((string) config('services.paystack.currency')) === 'USD')
+                    <label style="display:flex;align-items:center;gap:10px;border:1px solid #DCDFE7;border-radius:11px;padding:12px 14px;cursor:pointer">
+                        <input type="radio" name="gateway" value="paystack"> Card / bank / USSD via Paystack
+                    </label>
+                @endif
             </div>
         </div>
 
         <button type="submit" class="btn btn-dark btn-block" style="height:48px">Continue to payment →</button>
     </form>
+    @endif
 </div>
 <div style="height:60px"></div>
 @endsection

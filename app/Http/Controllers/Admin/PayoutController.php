@@ -43,17 +43,13 @@ class PayoutController extends Controller
                 ->map(fn ($label, $key) => ['label' => $label, 'active' => $tab === $key])->values(),
             'colA' => 'Payee', 'colB' => 'Period', 'colC' => 'Amount',
             'rows' => $rows, 'pagination' => $payouts->links(),
-            'actionsHtml' => '<form method="POST" action="'.route('admin.payouts.run-batch').'">'.csrf_field().'<button class="btn btn-dark" type="submit">Run payout batch</button></form>',
+            'actionsHtml' => '',
         ]);
     }
 
     public function runBatch(): RedirectResponse
     {
-        $count = Payout::where('status', 'scheduled')->count();
-        Payout::where('status', 'scheduled')->update(['status' => 'paid', 'paid_at' => now()]);
-        AuditLog::record('payout.batch_run', null, ['count' => $count]);
-
-        return back()->with('status', "Paid out {$count} authors.");
+        return back()->withErrors(['payouts' => 'Payout transfers are not integrated. Do not mark authors paid until an external transfer is confirmed.']);
     }
 
     public function hold(Payout $payout): RedirectResponse

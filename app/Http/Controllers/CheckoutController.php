@@ -7,6 +7,7 @@ use App\Models\Product;
 use App\Services\PaystackClient;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
 use Stripe\Checkout\Session as StripeCheckoutSession;
@@ -21,7 +22,10 @@ class CheckoutController extends Controller
         abort_unless($product->status === 'live', 404);
         abort_if($product->isAcquisition() && $product->acquisition_status === 'sold', 404);
 
-        return view('market.checkout', ['product' => $product]);
+        return view('market.checkout', [
+            'product' => $product,
+            'canPurchase' => $product->isAcquisition() || Storage::disk('local')->exists($product->downloadPath()),
+        ]);
     }
 
     public function store(Request $request, Product $product): RedirectResponse
@@ -40,6 +44,14 @@ class CheckoutController extends Controller
 
         if ($data['license_type'] === 'extended' && ! $product->extended_price_cents) {
             return back()->withErrors(['license_type' => 'Extended license is not available for this product.']);
+        }
+
+        if (! $product->isAcquisition() && ! Storage::disk('local')->exists($product->downloadPath())) {
+            return back()->withErrors(['product' => 'This release is not available for purchase yet. Please contact support.']);
+        }
+
+        if (strtoupper((string) config('services.'.$data['gateway'].'.currency')) !== 'USD') {
+            return back()->withErrors(['gateway' => 'This payment method is unavailable for USD prices. Please choose another method.']);
         }
 
         $priceCents = match ($data['license_type']) {
