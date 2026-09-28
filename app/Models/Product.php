@@ -6,7 +6,12 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use RuntimeException;
+use Throwable;
 
 class Product extends Model
 {
@@ -64,6 +69,33 @@ class Product extends Model
     public function media(): HasMany
     {
         return $this->hasMany(ProductMedia::class)->orderBy('sort');
+    }
+
+    public function banner(): HasOne
+    {
+        return $this->hasOne(ProductMedia::class)->where('kind', 'thumbnail');
+    }
+
+    public function replaceBanner(UploadedFile $image): ?string
+    {
+        $previousPath = $this->banner?->path;
+        $path = $image->store('products/'.$this->id, 'public');
+
+        if ($path === false) {
+            throw new RuntimeException('Unable to store the product image.');
+        }
+
+        try {
+            $this->banner()->updateOrCreate([], ['kind' => 'thumbnail', 'path' => $path]);
+        } catch (Throwable $exception) {
+            Storage::disk('public')->delete($path);
+
+            throw $exception;
+        }
+
+        $this->unsetRelation('banner');
+
+        return $previousPath;
     }
 
     public function reviews(): HasMany

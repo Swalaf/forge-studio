@@ -80,6 +80,74 @@ class AuthorProductTest extends TestCase
         Storage::disk('local')->assertExists($product->downloadPath());
     }
 
+    public function test_author_banner_is_visible_on_the_marketplace_and_can_be_replaced(): void
+    {
+        Storage::fake('public');
+        $author = User::factory()->create(['role' => 'author']);
+
+        $this->actingAs($author)->get(route('author.products.create'))
+            ->assertOk()->assertSee('name="banner_image"', false);
+
+        $this->post(route('author.products.store'), [
+            'title' => 'Orbit Kit', 'price_cents' => 2900,
+            'banner_image' => UploadedFile::fake()->image('orbit.png', 1200, 675),
+        ])->assertRedirect();
+
+        $product = Product::sole();
+        $originalPath = $product->banner->path;
+        $this->assertSame('thumbnail', $product->banner->kind);
+        Storage::disk('public')->assertExists($originalPath);
+
+        $product->update(['status' => 'live', 'published_at' => now(), 'is_featured' => true]);
+        $originalUrl = Storage::disk('public')->url($originalPath);
+        $this->get(route('market.show', $product->slug))
+            ->assertSee($originalUrl)->assertSee('alt="Preview of Orbit Kit"', false);
+        $this->get(route('market.browse'))->assertSee($originalUrl);
+        $this->get(route('market.browse', ['view' => 'list']))->assertSee($originalUrl);
+        $this->get(route('home'))->assertSee($originalUrl);
+
+        $customer = User::factory()->create(['role' => 'customer']);
+        $customer->savedItems()->create(['product_id' => $product->id]);
+        $this->actingAs($customer)->get(route('account.saved.index'))->assertSee($originalUrl);
+
+        $this->actingAs($author)->put(route('author.products.update', $product), [
+            'title' => $product->title, 'price_cents' => 2900,
+            'banner_image' => UploadedFile::fake()->image('new-preview.jpg', 1200, 675),
+        ])->assertRedirect(route('author.products.edit', $product));
+
+        $replacementPath = $product->fresh()->banner->path;
+        $this->assertNotSame($originalPath, $replacementPath);
+        Storage::disk('public')->assertMissing($originalPath);
+        Storage::disk('public')->assertExists($replacementPath);
+        $this->assertSame(1, $product->media()->count());
+        $this->get(route('market.show', $product->slug))
+            ->assertSee(Storage::disk('public')->url($replacementPath))
+            ->assertDontSee($originalUrl);
+    }
+
+    public function test_invalid_banner_images_do_not_create_an_author_listing(): void
+    {
+        Storage::fake('public');
+        $author = User::factory()->create(['role' => 'author']);
+
+        $this->actingAs($author)->post(route('author.products.store'), [
+            'title' => 'Unsafe Banner', 'price_cents' => 2900,
+            'banner_image' => UploadedFile::fake()->create('unsafe.svg', 10, 'image/svg+xml'),
+        ])->assertRedirect()->assertSessionHasErrors('banner_image');
+
+        $this->post(route('author.products.store'), [
+            'title' => 'Too Small', 'price_cents' => 2900,
+            'banner_image' => UploadedFile::fake()->image('too-small.png', 100, 100),
+        ])->assertRedirect()->assertSessionHasErrors('banner_image');
+
+        $this->post(route('author.products.store'), [
+            'title' => 'Executable', 'price_cents' => 2900,
+            'banner_image' => UploadedFile::fake()->create('unsafe.php', 10, 'image/png'),
+        ])->assertRedirect()->assertSessionHasErrors('banner_image');
+
+        $this->assertSame(0, Product::count());
+    }
+
     public function test_submission_requires_private_zip_and_does_not_advance_without_one(): void
     {
         Storage::fake('local');
@@ -156,6 +224,7 @@ class AuthorProductTest extends TestCase
     public function test_author_cannot_edit_or_upload_to_another_authors_product(): void
     {
         Storage::fake('local');
+        Storage::fake('public');
         $author = User::factory()->create(['role' => 'author']);
         $otherProduct = $this->makeProduct(User::factory()->create(['role' => 'author']), 'draft');
 
@@ -163,10 +232,12 @@ class AuthorProductTest extends TestCase
         $this->put(route('author.products.update', $otherProduct), [
             'title' => 'Changed', 'price_cents' => 2900,
             'release_zip' => UploadedFile::fake()->create('unauthorized.zip', 10, 'application/zip'),
+            'banner_image' => UploadedFile::fake()->image('unauthorized.png', 1200, 675),
         ])->assertForbidden();
 
         $this->assertSame('draft', $otherProduct->fresh()->status);
         Storage::disk('local')->assertMissing($otherProduct->downloadPath());
+        $this->assertSame(0, $otherProduct->media()->count());
     }
 
     public function test_non_zip_upload_is_rejected_before_draft_creation(): void

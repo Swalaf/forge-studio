@@ -1,6 +1,7 @@
 @props(['product'])
 <a href="{{ route('market.show', $product) }}" class="product-card">
     <div class="product-shot">
+        <x-product-image :product="$product" />
         @if ($product->is_studio_original)
             <span class="badge-corner">Studio original</span>
         @endif

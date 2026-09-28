@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
-use App\Models\Ticket;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -17,7 +16,7 @@ class RegisterController extends Controller
     {
         return view('auth.index', [
             'mode' => 'signup',
-            'role' => in_array($request->query('role'), ['customer', 'author', 'admin'], true) ? $request->query('role') : 'customer',
+            'role' => in_array($request->query('role'), ['customer', 'author'], true) ? $request->query('role') : 'customer',
         ]);
     }
 
@@ -28,7 +27,7 @@ class RegisterController extends Controller
             'company' => ['nullable', 'string', 'max:255'],
             'email' => ['required', 'email', 'unique:users,email'],
             'password' => ['required', 'min:8'],
-            'intended_role' => ['required', 'in:customer,author,admin'],
+            'intended_role' => ['required', 'in:customer,author'],
             'terms' => ['accepted'],
         ]);
 
@@ -40,25 +39,9 @@ class RegisterController extends Controller
             'role' => $data['intended_role'] === 'author' ? 'author' : 'customer',
         ]);
 
-        $status = null;
-
-        if ($data['intended_role'] === 'admin') {
-            $ticket = Ticket::create([
-                'opener_id' => $user->id,
-                'subject' => 'Studio console access requested',
-                'priority' => 'normal',
-            ]);
-            $ticket->messages()->create([
-                'author_id' => $user->id,
-                'body' => 'New account requesting Forge Admin console access.'.($user->company ? ' Team: '.$user->company.'.' : ''),
-            ]);
-            $status = 'Account created — your console access request has been sent to the studio.';
-        }
-
         Auth::login($user);
         $request->session()->regenerate();
 
-        return redirect()->intended($user->isAuthor() ? route('author.overview') : route('account.overview'))
-            ->with('status', $status);
+        return redirect()->intended($user->isAuthor() ? route('author.overview') : route('account.overview'));
     }
 }

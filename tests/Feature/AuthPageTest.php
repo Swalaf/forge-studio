@@ -50,17 +50,15 @@ class AuthPageTest extends TestCase
         $this->get(route('author.overview'))->assertOk();
     }
 
-    public function test_requesting_admin_access_never_grants_admin_role_and_opens_a_ticket_instead(): void
+    public function test_public_registration_rejects_an_admin_role_even_when_posted_directly(): void
     {
         $this->post(route('register'), [
             'name' => 'Wants Access', 'email' => 'wants-access@example.com', 'password' => 'password123',
             'intended_role' => 'admin', 'terms' => '1',
-        ])->assertRedirect(route('account.overview'));
+        ])->assertSessionHasErrors('intended_role');
 
-        $user = User::where('email', 'wants-access@example.com')->firstOrFail();
-        $this->assertSame('customer', $user->role); // never admin, ever, from a public form
-        $this->assertDatabaseHas('tickets', ['opener_id' => $user->id, 'subject' => 'Studio console access requested']);
-        $this->assertSame(1, Ticket::where('opener_id', $user->id)->count());
+        $this->assertDatabaseMissing('users', ['email' => 'wants-access@example.com']);
+        $this->assertSame(0, Ticket::count());
     }
 
     public function test_signup_requires_accepting_terms(): void
@@ -105,18 +103,20 @@ class AuthPageTest extends TestCase
         $this->assertAuthenticatedAs($admin);
     }
 
-    public function test_sign_in_hides_the_admin_choice_even_with_an_admin_role_hint(): void
+    public function test_sign_in_has_no_admin_choice_even_with_an_admin_role_hint(): void
     {
         $this->get(route('login', ['role' => 'admin']))
             ->assertSee('data-initial-role="customer"', false)
-            ->assertSee('data-role="admin" hidden', false);
+            ->assertDontSee('data-role="admin"', false);
     }
 
-    public function test_sign_up_keeps_the_existing_admin_access_request_choice(): void
+    public function test_registration_has_no_admin_choice_even_with_an_admin_role_hint(): void
     {
         $this->get(route('register', ['role' => 'admin']))
-            ->assertSee('data-initial-role="admin"', false)
-            ->assertDontSee('data-role="admin" hidden', false);
+            ->assertSee('data-initial-role="customer"', false)
+            ->assertSee('data-role="author"', false)
+            ->assertDontSee('data-role="admin"', false)
+            ->assertDontSee('Request console access');
     }
 
     public function test_login_throttles_repeated_attempts_for_the_same_account_and_ip(): void

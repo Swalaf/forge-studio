@@ -50,7 +50,7 @@
                 <div style="display:grid;gap:12px">
                     @foreach ($products as $product)
                         <a href="{{ route('market.show', $product) }}" class="card" style="padding:14px;display:flex;gap:18px;align-items:center;color:inherit">
-                            <div class="dt-thumb" style="width:150px;height:96px;border-radius:12px"></div>
+                            <div class="dt-thumb" style="width:150px;height:96px;border-radius:12px"><x-product-image :product="$product" /></div>
                             <div style="flex:1;min-width:0">
                                 <div class="eyebrow">{{ $product->category?->name }}</div>
                                 <div style="font-size:17px;font-weight:700;letter-spacing:-0.02em;margin-top:6px">{{ $product->title }}</div>

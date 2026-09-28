@@ -6,7 +6,7 @@
     @forelse ($saved as $item)
         <div class="card" style="overflow:hidden">
             <a href="{{ route('market.show', $item->product) }}" style="display:block;color:inherit">
-                <div class="product-shot" style="height:130px"></div>
+                <div class="product-shot" style="height:130px"><x-product-image :product="$item->product" /></div>
                 <div style="padding:14px">
                     <div style="font-size:14.5px;font-weight:700">{{ $item->product->title }}</div>
                     <div class="eyebrow" style="margin-top:4px">{{ $item->product->category?->name }}</div>

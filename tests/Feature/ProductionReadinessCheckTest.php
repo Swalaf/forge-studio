@@ -52,4 +52,15 @@ class ProductionReadinessCheckTest extends TestCase
         $this->assertStringContainsString('STRIPE_SECRET must be set', $output);
         $this->assertStringContainsString('PAYSTACK_PUBLIC_KEY and PAYSTACK_SECRET_KEY must both be real values', $output);
     }
+
+    public function test_requires_public_storage_link_for_storefront_images(): void
+    {
+        $this->app->usePublicPath(storage_path('framework/testing/unlinked-public'));
+
+        $this->assertSame(1, Artisan::call('app:production-readiness-check'));
+        $this->assertStringContainsString(
+            'Public storefront images require a storage link; run php artisan storage:link.',
+            Artisan::output()
+        );
+    }
 }

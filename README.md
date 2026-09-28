@@ -176,8 +176,9 @@ server {
 Run `nginx -t` before reloading Nginx; start/enable Nginx and PHP-FPM through
 systemd. Open ports 80/443 in the host firewall and Vultr firewall, and do not
 expose database, PHP-FPM, or queue endpoints publicly.
-For studio ZIP uploads, set PHP-FPM's `upload_max_filesize=100M` and
+For product ZIP uploads, set PHP-FPM's `upload_max_filesize=100M` and
 `post_max_size=110M` as well as the Nginx body limit shown above.
+PHP-FPM also needs the GD and fileinfo extensions to validate product images.
 
 On **first installation**, from the project directory, install dependencies
 and create schema. `db:seed` must be run from a **private interactive
@@ -193,12 +194,14 @@ the seeded `.test` support email in admin settings before launch.
 composer install --no-dev --prefer-dist --optimize-autoloader --no-interaction
 php artisan migrate --force --no-interaction
 php artisan db:seed --force
+php artisan storage:link --no-interaction
 php artisan optimize --no-interaction
 php artisan app:production-readiness-check --no-interaction
 ```
 
-For each **subsequent release**, keep `.env`, `APP_KEY`, stored product files and
-the database intact; reinstall dependencies, run `php artisan migrate
+For each **subsequent release**, keep `.env`, `APP_KEY`, stored product files,
+`storage/app/public`, the `public/storage` symlink, and the database intact;
+reinstall dependencies, run `php artisan migrate
 --force --no-interaction`, then `php artisan optimize --no-interaction`,
 `php artisan queue:restart --no-interaction`, and the readiness check. Do not
 re-run the seed on every release: it also overwrites site settings. If the
@@ -239,6 +242,10 @@ private and include it in backups; **do not** place commercial ZIPs under
 `public/` or any public storage symlink. Checkout refuses to sell software
 without the current artifact; purchases serve the ZIP only to an authorized,
 non-revoked license holder. Acquisitions require a separate manual handover.
+Authors and admins can upload a JPG, PNG, or WebP storefront image (up to 5 MB)
+through their product form. These **public** images live under `storage/app/public`
+and are served through `public/storage`; keep both the image files and the
+symlink available after releases. Never place paid software ZIPs there.
 Payout transfers are **not** integrated: the batch button is disabled rather
 than falsely marking authors paid. Do not promise automated payouts.
 
@@ -246,12 +253,13 @@ Finally, verify `/up`, login, password-reset email, a test purchase and signed
 webhook, authorized download, and HTTPS redirect on the live domain. Register
 `/webhooks/stripe` for `checkout.session.completed` and (if enabled)
 `/webhooks/paystack` at the gateway dashboards. Back up the database and
-`storage/app/private`, monitor logs/queue/failed jobs, and keep `.env` secret.
+`storage/app/private` plus `storage/app/public`, monitor logs/queue/failed jobs,
+and keep `.env` secret.
 
 ## What's simplified for this pass
 
-- **Downloads** use operator-provisioned private ZIPs; there is no in-app author
-  artifact upload workflow or virus scan yet. Vet files before publishing them.
+- **Downloads** use private ZIPs uploaded by admins or authors; there is no virus
+  scan yet. Vet files before publishing them.
 - **Admin "Content" and "Settings"** are simple key/value forms (`App\Models\Setting`), not a
   granular roles/permissions or integrations engine.
 - **Custom studio service work** (the "Hire the studio" quote flow) is invoiced manually by an

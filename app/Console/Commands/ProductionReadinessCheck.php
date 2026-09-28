@@ -26,6 +26,7 @@ class ProductionReadinessCheck extends Command
             $this->checkSessionSecurity(),
             $this->checkQueues(),
             $this->checkCache(),
+            $this->checkPublicStorage(),
         ])->flatten()->filter()->values();
 
         if ($failures->isEmpty()) {
@@ -232,5 +233,19 @@ class ProductionReadinessCheck extends Command
         }
 
         return [];
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function checkPublicStorage(): array
+    {
+        $link = public_path('storage');
+
+        if (is_link($link) && realpath($link) === realpath(storage_path('app/public'))) {
+            return [];
+        }
+
+        return ['Public storefront images require a storage link; run php artisan storage:link.'];
     }
 }

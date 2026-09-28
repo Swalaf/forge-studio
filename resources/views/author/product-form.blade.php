@@ -26,15 +26,16 @@
         </div>
         <div class="field"><label for="listing-demo">Demo URL</label><input id="listing-demo" type="url" name="demo_url" value="{{ old('demo_url', $product->demo_url) }}" placeholder="https://"></div>
     </div>
+    <x-product-banner-field :product="$product" />
     <div class="listing-divider"></div>
-    <div class="listing-section-head"><div><div class="eyebrow eyebrow-accent">02 / Pricing</div><h2>Set your price</h2><p>Enter amounts in USD cents. For example, 2900 means $29.00.</p></div></div>
+    <div class="listing-section-head"><div><div class="eyebrow eyebrow-accent">03 / Pricing</div><h2>Set your price</h2><p>Enter amounts in USD cents. For example, 2900 means $29.00.</p></div></div>
     <div class="field-row">
         <div class="field"><label for="listing-price">Regular price (cents)</label><input id="listing-price" type="number" min="0" name="price_cents" value="{{ old('price_cents', $product->price_cents) }}" required></div>
         <div class="field"><label for="listing-extended">Extended price (cents)</label><input id="listing-extended" type="number" min="0" name="extended_price_cents" value="{{ old('extended_price_cents', $product->extended_price_cents) }}" placeholder="Optional"></div>
     </div>
     @if (! $product->exists || (! $product->published_at && $product->status !== 'in_review'))
         <div class="listing-divider"></div>
-        <div class="listing-section-head"><div><div class="eyebrow eyebrow-accent">03 / Release file</div><h2>Attach your build</h2><p>A private ZIP is needed before you can submit a version for review.</p></div></div>
+        <div class="listing-section-head"><div><div class="eyebrow eyebrow-accent">04 / Release file</div><h2>Attach your build</h2><p>A private ZIP is needed before you can submit a version for review.</p></div></div>
         <div class="listing-upload"><div class="listing-upload-icon" aria-hidden="true">ZIP</div><div class="field"><label for="listing-file">Product ZIP (max 100 MB)</label><input id="listing-file" type="file" name="release_zip" accept=".zip,application/zip"><span class="field-hint">{{ $product->exists ? 'Leave empty to keep the existing draft file.' : 'You can also upload it after saving your draft.' }} Downloads are private and available only to licensed buyers.</span></div></div>
     @endif
     <div class="listing-actions"><button type="submit" class="btn btn-dark">{{ $product->exists ? 'Save changes' : 'Create draft' }}</button><a href="{{ route('author.products.index') }}" class="btn btn-ghost">Back to products</a></div>

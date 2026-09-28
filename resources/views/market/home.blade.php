@@ -70,7 +70,7 @@
         <div class="card" style="overflow:hidden">
             @forelse ($popular as $product)
                 <a href="{{ route('market.show', $product) }}" style="display:flex;align-items:center;gap:14px;padding:14px 16px;border-bottom:1px solid var(--border-soft);color:inherit">
-                    <div class="dt-thumb" style="width:56px;height:44px"></div>
+                    <div class="dt-thumb" style="width:56px;height:44px"><x-product-image :product="$product" /></div>
                     <div style="flex:1;min-width:0">
                         <div style="font-size:14.5px;font-weight:650;letter-spacing:-0.01em">{{ $product->title }}</div>
                         <div class="eyebrow" style="margin-top:3px">{{ $product->category?->name }} · {{ $product->sales_count }} sales</div>
@@ -90,7 +90,7 @@
         <div style="display:grid;gap:12px">
             @forelse ($releases as $product)
                 <a href="{{ route('market.show', $product) }}" class="card" style="padding:16px;display:flex;gap:14px;align-items:center;color:inherit">
-                    <div class="dt-thumb" style="width:70px;height:56px"></div>
+                    <div class="dt-thumb" style="width:70px;height:56px"><x-product-image :product="$product" /></div>
                     <div style="flex:1;min-width:0">
                         <span style="font-size:14.5px;font-weight:700;letter-spacing:-0.01em">{{ $product->title }}</span>
                         <div style="font-size:13px;color:var(--muted);margin-top:5px">{{ $product->tagline }}</div>

@@ -7,7 +7,7 @@
 <div class="container" style="padding-top:14px;display:flex;flex-wrap:wrap;gap:32px;align-items:flex-start">
     <div style="flex:3 1 460px;min-width:0">
         <div class="card" style="overflow:hidden">
-            <div style="height:clamp(200px,32vw,420px);background:repeating-linear-gradient(135deg,#EDEFF4 0 14px,#E4E7EF 14px 28px)"></div>
+            <div class="product-hero-shot"><x-product-image :product="$product" loading="eager" /></div>
         </div>
 
         <div style="padding:26px 0 0">

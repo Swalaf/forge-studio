@@ -11,9 +11,9 @@ class MarketController extends Controller
 {
     public function home(): View
     {
-        $featured = Product::software()->live()->where('is_featured', true)->with('author')->latest('published_at')->take(3)->get();
-        $popular = Product::software()->live()->with('author')->orderByDesc('sales_count')->take(5)->get();
-        $releases = Product::software()->live()->with('author')->latest('published_at')->take(4)->get();
+        $featured = Product::software()->live()->where('is_featured', true)->with('author', 'banner')->latest('published_at')->take(3)->get();
+        $popular = Product::software()->live()->with('author', 'banner')->orderByDesc('sales_count')->take(5)->get();
+        $releases = Product::software()->live()->with('author', 'banner')->latest('published_at')->take(4)->get();
         $categories = Category::withCount(['products' => fn ($q) => $q->software()->live()])->orderBy('name')->get();
 
         return view('market.home', [
@@ -27,7 +27,7 @@ class MarketController extends Controller
 
     public function browse(Request $request): View
     {
-        $query = Product::software()->live()->with(['author', 'category']);
+        $query = Product::software()->live()->with(['author', 'category', 'banner']);
 
         if ($search = $request->string('q')->trim()->value()) {
             $query->where(fn ($q) => $q->where('title', 'like', "%{$search}%")->orWhere('tagline', 'like', "%{$search}%"));
@@ -61,7 +61,7 @@ class MarketController extends Controller
         abort_unless($product->status === 'live' && $product->listing_type === 'software', 404);
 
         $product->increment('view_count');
-        $product->load(['author', 'category', 'media']);
+        $product->load(['author', 'category', 'banner']);
         $reviews = $product->reviews()->where('status', 'published')->with('customer')->latest()->take(10)->get();
 
         $ratingBars = [];

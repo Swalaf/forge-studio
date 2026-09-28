@@ -23,12 +23,15 @@ class AdminStudioProductTest extends TestCase
 
         $this->get(route('admin.products.create'))
             ->assertSee(route('admin.products.store'))
-            ->assertSee('Private release ZIP');
+            ->assertSee('Private release ZIP')
+            ->assertSee('name="banner_image"', false)
+            ->assertSee('class="card listing-form"', false);
     }
 
     public function test_admin_creates_a_studio_original_draft_with_a_private_release(): void
     {
         Storage::fake('local');
+        Storage::fake('public');
         $admin = User::factory()->create(['role' => 'admin']);
         $otherAuthor = User::factory()->create(['role' => 'author']);
 
@@ -36,6 +39,7 @@ class AdminStudioProductTest extends TestCase
             'title' => 'Studio Toolkit', 'price_cents' => 8900, 'extended_price_cents' => 12900,
             'author_id' => $otherAuthor->id, 'is_studio_original' => false, 'status' => 'live', 'is_featured' => 1,
             'release_zip' => UploadedFile::fake()->create('release.zip', 10, 'application/zip'),
+            'banner_image' => UploadedFile::fake()->image('studio.png', 1200, 675),
         ]);
 
         $product = Product::sole();
@@ -47,7 +51,29 @@ class AdminStudioProductTest extends TestCase
         $this->assertSame('1.0.0', $product->current_version);
         $this->assertSame(12900, $product->extended_price_cents);
         Storage::disk('local')->assertExists('products/'.$product->id.'/1-0-0.zip');
+        $this->assertSame('thumbnail', $product->banner->kind);
+        Storage::disk('public')->assertExists($product->banner->path);
+        $this->get(route('admin.products.edit', $product))->assertSee($product->banner->url());
         $this->assertDatabaseHas('audit_logs', ['actor_id' => $admin->id, 'action' => 'product.created', 'subject_id' => $product->id]);
+    }
+
+    public function test_admin_can_replace_a_studio_banner_without_leaving_an_old_public_file(): void
+    {
+        Storage::fake('public');
+        $admin = User::factory()->create(['role' => 'admin']);
+        $product = $this->studioProduct($admin);
+        $product->replaceBanner(UploadedFile::fake()->image('before.png', 1200, 675));
+        $originalPath = $product->fresh()->banner->path;
+
+        $this->actingAs($admin)->put(route('admin.products.update', $product), [
+            'title' => $product->title, 'price_cents' => 8900, 'status' => 'draft',
+            'banner_image' => UploadedFile::fake()->image('after.webp', 1200, 675),
+        ])->assertRedirect(route('admin.products.index'));
+
+        $this->assertNotSame($originalPath, $product->fresh()->banner->path);
+        Storage::disk('public')->assertMissing($originalPath);
+        Storage::disk('public')->assertExists($product->fresh()->banner->path);
+        $this->assertSame(1, $product->media()->count());
     }
 
     public function test_studio_product_cannot_be_published_without_its_release(): void
@@ -122,9 +148,23 @@ class AdminStudioProductTest extends TestCase
         $this->assertSame(0, Product::count());
     }
 
+    public function test_invalid_studio_banner_is_rejected_without_creating_a_product(): void
+    {
+        Storage::fake('public');
+        $admin = User::factory()->create(['role' => 'admin']);
+
+        $this->actingAs($admin)->post(route('admin.products.store'), [
+            'title' => 'Studio Toolkit', 'price_cents' => 8900,
+            'banner_image' => UploadedFile::fake()->create('unsafe.svg', 10, 'image/svg+xml'),
+        ])->assertRedirect()->assertSessionHasErrors('banner_image');
+
+        $this->assertSame(0, Product::count());
+    }
+
     public function test_studio_release_upload_cannot_replace_a_third_party_product_file(): void
     {
         Storage::fake('local');
+        Storage::fake('public');
         $admin = User::factory()->create(['role' => 'admin']);
         $author = User::factory()->create(['role' => 'author']);
         $product = Product::create([
@@ -137,8 +177,14 @@ class AdminStudioProductTest extends TestCase
             'release_zip' => UploadedFile::fake()->create('release.zip', 10, 'application/zip'),
         ])->assertRedirect()->assertSessionHasErrors('release_zip');
 
+        $this->put(route('admin.products.update', $product), [
+            'title' => 'Changed Title', 'price_cents' => 8900, 'status' => 'draft',
+            'banner_image' => UploadedFile::fake()->image('unauthorized.png', 1200, 675),
+        ])->assertRedirect()->assertSessionHasErrors('banner_image');
+
         $this->assertSame('Third-party Toolkit', $product->fresh()->title);
         Storage::disk('local')->assertMissing($product->downloadPath());
+        $this->assertSame(0, $product->media()->count());
     }
 
     public function test_author_cannot_create_studio_original_products(): void

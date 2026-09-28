@@ -71,7 +71,7 @@ class ProductController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $data = $this->validated($request);
-        unset($data['release_zip']);
+        unset($data['release_zip'], $data['banner_image']);
         $data['author_id'] = Auth::id();
         $data['slug'] = Str::slug($data['title']).'-'.Str::random(5);
         $data['status'] = 'draft';
@@ -80,6 +80,9 @@ class ProductController extends Controller
         $product = DB::transaction(function () use ($request, $data): Product {
             $product = Product::create($data);
             $this->storeRelease($request, $product, (string) $product->current_version);
+            if ($request->hasFile('banner_image')) {
+                $product->replaceBanner($request->file('banner_image'));
+            }
             AuditLog::record('product.created', $product);
 
             return $product;
@@ -102,17 +105,25 @@ class ProductController extends Controller
     {
         $this->authorize('update', $product);
         $data = $this->validated($request);
-        unset($data['release_zip']);
+        unset($data['release_zip'], $data['banner_image']);
 
         if ($request->hasFile('release_zip') && ($product->published_at || $product->status === 'in_review')) {
             return back()->withErrors(['release_zip' => 'Upload a new version through the submission form instead.']);
         }
 
-        DB::transaction(function () use ($request, $product, $data): void {
+        $previousBanner = DB::transaction(function () use ($request, $product, $data): ?string {
             $product->update($data);
             $this->storeRelease($request, $product, (string) $product->current_version);
+            $previousBanner = $request->hasFile('banner_image')
+                ? $product->replaceBanner($request->file('banner_image')) : null;
             AuditLog::record('product.updated', $product);
+
+            return $previousBanner;
         });
+
+        if ($previousBanner) {
+            Storage::disk('public')->delete($previousBanner);
+        }
 
         return redirect()->route('author.products.edit', $product)->with('status', 'Product updated.');
     }
@@ -165,6 +176,7 @@ class ProductController extends Controller
             'extended_price_cents' => ['nullable', 'integer', 'min:0'],
             'demo_url' => ['nullable', 'url', 'max:255'],
             'release_zip' => ['nullable', 'file', 'mimes:zip', 'max:102400'],
+            'banner_image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'extensions:jpg,jpeg,png,webp', 'max:5120', 'dimensions:min_width=400,min_height=225,max_width=6000,max_height=6000'],
         ]);
     }
 

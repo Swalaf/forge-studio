@@ -70,10 +70,6 @@
                             <span class="lbl">⌨ Developer</span>
                             <span class="note">Sell your products</span>
                         </button>
-                        <button type="button" class="role-pick" data-role="admin" @if ($mode === 'signin')hidden @endif>
-                            <span class="lbl">◈ Studio admin</span>
-                            <span class="note">Owner console</span>
-                        </button>
                     </div>
                 </div>
 
@@ -135,9 +131,6 @@
                         <span id="terms-copy">I accept the terms of service and the refund policy.</span>
                     </label>
                     <button type="submit" class="btn btn-dark" id="signup-submit" style="height:50px;border-radius:13px"></button>
-                    <div id="approval-note" style="display:none;gap:10px;background:#F7F8FA;border:1px solid #E6E8EE;border-radius:12px;padding:12px 13px">
-                        <p style="margin:0;font-size:12.5px;line-height:1.55;color:#4A5262" id="approval-copy"></p>
-                    </div>
                 </form>
 
                 <div style="display:flex;align-items:center;gap:12px;margin:20px 0">
@@ -193,7 +186,7 @@
 <script>
 (function () {
     var mode = document.body.dataset.initialMode === 'signup' ? 'signup' : 'signin';
-    var role = ['customer', 'author', 'admin'].indexOf(document.body.dataset.initialRole) !== -1 ? document.body.dataset.initialRole : 'customer';
+    var role = ['customer', 'author'].indexOf(document.body.dataset.initialRole) !== -1 ? document.body.dataset.initialRole : 'customer';
 
     var tabSignin = document.getElementById('tab-signin');
     var tabSignup = document.getElementById('tab-signup');
@@ -207,31 +200,23 @@
     var orgLabel = document.getElementById('org-label');
     var orgInput = document.getElementById('org-input');
     var termsCopy = document.getElementById('terms-copy');
-    var approvalNote = document.getElementById('approval-note');
-    var approvalCopy = document.getElementById('approval-copy');
     var intendedRoleInput = formSignup.querySelector('input[name="intended_role"]');
 
     var copy = {
         signin: {
             customer: ['Welcome back', 'Your purchases, licenses, downloads and service orders.'],
-            author: ['Author sign in', 'Sales, submissions, reviews and payouts for your listings.'],
-            admin: ['Studio console', 'Owner access to the review queue, finance and every setting.']
+            author: ['Author sign in', 'Sales, submissions, reviews and payouts for your listings.']
         },
         signup: {
             customer: ['Create your account', 'Buy once, download forever — and hire the studio when you need more.'],
-            author: ['Create developer account', 'Sell on Forge Market with hand-reviewed listings.'],
-            admin: ['Request console access', 'Studio admin accounts are provisioned by an existing owner.']
+            author: ['Create developer account', 'Sell on Forge Market with hand-reviewed listings.']
         }
     };
-    var submitLabels = { customer: 'Create account', author: 'Create developer account', admin: 'Request access' };
-    var orgLabels = { customer: ['Company', 'Stacklane'], author: ['Author alias', 'mara.dev'], admin: ['Team', 'Forge Studio'] };
+    var submitLabels = { customer: 'Create account', author: 'Create developer account' };
+    var orgLabels = { customer: ['Company', 'Stacklane'], author: ['Author alias', 'mara.dev'] };
     var termsCopyByRole = {
         customer: 'I accept the terms of service and the refund policy.',
-        author: 'I accept the author agreement and understand every listing is reviewed by Forge Studio before publication.',
-        admin: 'I accept the terms of service. Console access still requires manual approval.'
-    };
-    var approvalCopyByRole = {
-        admin: 'Console access is granted by an existing owner. Your request is sent to the studio for approval.'
+        author: 'I accept the author agreement and understand every listing is reviewed by Forge Studio before publication.'
     };
 
     function paint() {
@@ -246,7 +231,6 @@
         roleLabel.textContent = mode === 'signup' ? 'I want to' : 'Sign in as';
 
         roleButtons.forEach(function (b) {
-            b.hidden = mode === 'signin' && b.dataset.role === 'admin';
             b.classList.toggle('is-active', b.dataset.role === role);
         });
         intendedRoleInput.value = role;
@@ -254,18 +238,10 @@
         orgLabel.textContent = orgLabels[role][0];
         orgInput.placeholder = orgLabels[role][1];
         termsCopy.textContent = termsCopyByRole[role];
-
-        if (mode === 'signup' && approvalCopyByRole[role]) {
-            approvalNote.style.display = 'flex';
-            approvalCopy.textContent = approvalCopyByRole[role];
-        } else {
-            approvalNote.style.display = 'none';
-        }
     }
 
     tabSignin.addEventListener('click', function () {
         mode = 'signin';
-        if (role === 'admin') role = 'customer';
         paint();
     });
     tabSignup.addEventListener('click', function () { mode = 'signup'; paint(); });

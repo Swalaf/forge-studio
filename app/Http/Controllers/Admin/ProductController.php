@@ -81,9 +81,10 @@ class ProductController extends Controller
             'extended_price_cents' => ['nullable', 'integer', 'min:0'],
             'demo_url' => ['nullable', 'url', 'max:255'],
             'release_zip' => ['nullable', 'file', 'mimes:zip', 'max:102400'],
+            'banner_image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'extensions:jpg,jpeg,png,webp', 'max:5120', 'dimensions:min_width=400,min_height=225,max_width=6000,max_height=6000'],
             'is_featured' => ['sometimes', 'boolean'],
         ]);
-        unset($data['release_zip']);
+        unset($data['release_zip'], $data['banner_image']);
         $data['is_featured'] = $request->boolean('is_featured');
 
         $product = DB::transaction(function () use ($request, $data): Product {
@@ -96,6 +97,9 @@ class ProductController extends Controller
             ]);
 
             $this->storeRelease($request, $product);
+            if ($request->hasFile('banner_image')) {
+                $product->replaceBanner($request->file('banner_image'));
+            }
             AuditLog::record('product.created', $product);
 
             return $product;
@@ -124,13 +128,18 @@ class ProductController extends Controller
             'extended_price_cents' => ['nullable', 'integer', 'min:0'],
             'demo_url' => ['nullable', 'url', 'max:255'],
             'release_zip' => ['nullable', 'file', 'mimes:zip', 'max:102400'],
+            'banner_image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'extensions:jpg,jpeg,png,webp', 'max:5120', 'dimensions:min_width=400,min_height=225,max_width=6000,max_height=6000'],
             'status' => ['required', 'in:draft,in_review,changes_requested,rejected,scheduled,live,hidden'],
             'is_featured' => ['sometimes', 'boolean'],
         ]);
-        unset($data['release_zip']);
+        unset($data['release_zip'], $data['banner_image']);
 
         if ($request->hasFile('release_zip') && ! $product->is_studio_original) {
             return back()->withErrors(['release_zip' => 'Private ZIP uploads are only available for studio products.']);
+        }
+
+        if ($request->hasFile('banner_image') && ! $product->is_studio_original) {
+            return back()->withErrors(['banner_image' => 'Image uploads for third-party products belong to their authors.']);
         }
 
         if ($product->is_studio_original && $data['status'] === 'live'
@@ -144,11 +153,19 @@ class ProductController extends Controller
             $data['published_at'] = $product->published_at ?? now();
         }
 
-        DB::transaction(function () use ($request, $product, $data): void {
+        $previousBanner = DB::transaction(function () use ($request, $product, $data): ?string {
             $product->update($data);
             $this->storeRelease($request, $product);
+            $previousBanner = $request->hasFile('banner_image')
+                ? $product->replaceBanner($request->file('banner_image')) : null;
             AuditLog::record('product.updated', $product);
+
+            return $previousBanner;
         });
+
+        if ($previousBanner) {
+            Storage::disk('public')->delete($previousBanner);
+        }
 
         return redirect()->route('admin.products.index')->with('status', 'Product updated.');
     }

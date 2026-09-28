@@ -15,7 +15,7 @@ class SavedController extends Controller
     {
         return view('account.saved', [
             'dashTitle' => 'Forge Market', 'dashSub' => 'Customer account', 'navGroups' => Nav::account('saved'),
-            'saved' => Auth::user()->savedItems()->with('product.category')->latest()->get(),
+            'saved' => Auth::user()->savedItems()->with('product.category', 'product.banner')->latest()->get(),
         ]);
     }
 
