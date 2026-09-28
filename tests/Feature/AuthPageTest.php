@@ -24,16 +24,30 @@ class AuthPageTest extends TestCase
         $this->assertNull($user->author_application_status);
     }
 
-    public function test_signing_up_to_sell_never_grants_author_role_directly_but_queues_an_application(): void
+    public function test_signing_up_as_developer_creates_an_author_account_and_opens_the_author_workspace(): void
     {
         $this->post(route('register'), [
             'name' => 'Aspiring Dev', 'email' => 'dev@example.com', 'password' => 'password123',
             'intended_role' => 'author', 'terms' => '1',
-        ])->assertRedirect(route('account.overview'));
+        ])->assertRedirect(route('author.overview'));
 
         $user = User::where('email', 'dev@example.com')->firstOrFail();
-        $this->assertSame('customer', $user->role); // never author directly
-        $this->assertSame('pending', $user->author_application_status);
+        $this->assertSame('author', $user->role);
+        $this->assertNull($user->author_application_status);
+        $this->assertAuthenticatedAs($user);
+        $this->get(route('author.overview'))->assertOk();
+    }
+
+    public function test_developer_signs_in_to_the_author_workspace(): void
+    {
+        $author = User::factory()->create(['role' => 'author']);
+
+        $this->post(route('login'), [
+            'email' => $author->email, 'password' => 'password',
+        ])->assertRedirect(route('author.overview'));
+
+        $this->assertAuthenticatedAs($author);
+        $this->get(route('author.overview'))->assertOk();
     }
 
     public function test_requesting_admin_access_never_grants_admin_role_and_opens_a_ticket_instead(): void

@@ -125,9 +125,9 @@
         </div>
         <div class="card card-pad">
             <div style="display:flex;gap:12px;align-items:center">
-                <div class="dash-logo" style="background:#0B0F19;color:#fff">{{ substr($product->author->name, 0, 1) }}</div>
+                <div class="dash-logo" style="background:#0B0F19;color:#fff">{{ $product->is_studio_original ? 'F' : substr($product->author->name, 0, 1) }}</div>
                 <div style="flex:1">
-                    <div style="font-size:15px;font-weight:700">{{ $product->author->name }}</div>
+                    <div style="font-size:15px;font-weight:700">{{ $product->is_studio_original ? 'Forge Studio' : $product->author->name }}</div>
                     <div class="mono" style="font-size:10.5px;color:var(--muted);margin-top:2px">{{ $product->author->products()->count() }} products</div>
                 </div>
             </div>

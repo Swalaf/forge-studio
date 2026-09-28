@@ -60,7 +60,8 @@ class CheckoutController extends Controller
             default => $product->price_cents,
         };
         $currency = $data['gateway'] === 'stripe' ? config('services.stripe.currency') : config('services.paystack.currency');
-        $commissionPct = 100 - $product->author->commission_pct;
+        $authorSharePct = $product->is_studio_original ? 0 : $product->author->commission_pct;
+        $commissionPct = 100 - $authorSharePct;
 
         $order = Order::create([
             'customer_id' => $request->user()->id,
@@ -80,7 +81,7 @@ class CheckoutController extends Controller
             'license_type' => $data['license_type'],
             'unit_price_cents' => $priceCents,
             'commission_cents' => (int) round($priceCents * $commissionPct / 100),
-            'author_share_cents' => (int) round($priceCents * $product->author->commission_pct / 100),
+            'author_share_cents' => (int) round($priceCents * $authorSharePct / 100),
         ]);
 
         return $data['gateway'] === 'stripe'

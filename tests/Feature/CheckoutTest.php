@@ -10,6 +10,7 @@ use App\Models\User;
 use App\Notifications\OrderConfirmed;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Notifications\SendQueuedNotifications;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
@@ -76,6 +77,35 @@ class CheckoutTest extends TestCase
         ])->assertRedirect()->assertSessionHasErrors('gateway');
 
         $this->assertSame(0, Order::count());
+    }
+
+    public function test_studio_original_checkout_keeps_all_revenue_with_the_studio(): void
+    {
+        Storage::fake('local');
+        Http::preventStrayRequests();
+        Http::fake(['https://api.paystack.co/transaction/initialize' => Http::response([
+            'status' => true, 'data' => ['authorization_url' => 'https://checkout.paystack.co/authorize/test'],
+        ])]);
+        config()->set('services.paystack.secret_key', 'sk_test_studio');
+        config()->set('services.paystack.currency', 'USD');
+
+        $admin = User::factory()->create(['role' => 'admin', 'commission_pct' => 70]);
+        $customer = User::factory()->create(['role' => 'customer']);
+        $product = Product::create([
+            'author_id' => $admin->id, 'title' => 'Studio Toolkit', 'slug' => 'studio-toolkit',
+            'price_cents' => 8900, 'status' => 'live', 'current_version' => '1.0.0',
+            'is_studio_original' => true,
+        ]);
+        Storage::disk('local')->put($product->downloadPath(), 'private release');
+
+        $this->actingAs($customer)->post(route('checkout.store', $product->slug), [
+            'license_type' => 'regular', 'gateway' => 'paystack',
+        ])->assertRedirect('https://checkout.paystack.co/authorize/test');
+
+        $item = Order::sole()->items()->sole();
+        $this->assertSame(8900, $item->commission_cents);
+        $this->assertSame(0, $item->author_share_cents);
+        Http::assertSentCount(1);
     }
 
     public function test_fulfilling_a_paid_order_creates_a_license_and_notifies_the_customer(): void

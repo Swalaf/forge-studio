@@ -153,6 +153,7 @@ server {
     server_name market.example.com;
     root /var/www/forge-market/public;
     index index.php;
+    client_max_body_size 110m;
 
     ssl_certificate /etc/letsencrypt/live/market.example.com/fullchain.pem;
     ssl_certificate_key /etc/letsencrypt/live/market.example.com/privkey.pem;
@@ -175,6 +176,8 @@ server {
 Run `nginx -t` before reloading Nginx; start/enable Nginx and PHP-FPM through
 systemd. Open ports 80/443 in the host firewall and Vultr firewall, and do not
 expose database, PHP-FPM, or queue endpoints publicly.
+For studio ZIP uploads, set PHP-FPM's `upload_max_filesize=100M` and
+`post_max_size=110M` as well as the Nginx body limit shown above.
 
 On **first installation**, from the project directory, install dependencies
 and create schema. `db:seed` must be run from a **private interactive
@@ -228,7 +231,8 @@ worker uses the same PHP version and `.env` as PHP-FPM; monitor `failed_jobs`
 and retry failures after fixing their cause. No application scheduler jobs are
 currently defined, so a cron entry for `schedule:run` is not required.
 
-Before accepting payments, place each approved product's real ZIP at
+Admin users can create a Studio original draft from Admin > Products and upload
+its private ZIP before publishing. Alternatively, place an approved product ZIP at
 `storage/app/private/products/{product_id}/{version_slug}.zip` (for example,
 product 42 version `1.0.0` is `products/42/1-0-0.zip`). Keep this directory
 private and include it in backups; **do not** place commercial ZIPs under

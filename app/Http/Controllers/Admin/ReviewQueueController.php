@@ -8,6 +8,8 @@ use App\Models\ProductVersion;
 use App\Support\Nav;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Illuminate\View\View;
 
 class ReviewQueueController extends Controller
@@ -63,6 +65,12 @@ class ReviewQueueController extends Controller
     public function approve(Request $request, ProductVersion $productVersion): RedirectResponse
     {
         $data = $request->validate(['reviewer_notes' => ['nullable', 'string'], 'publish_as' => ['nullable', 'in:live,scheduled,hidden']]);
+
+        $path = 'products/'.$productVersion->product_id.'/'.Str::slug(str_replace('.', '-', $productVersion->version)).'.zip';
+
+        if (! Storage::disk('local')->exists($path)) {
+            return back()->withErrors(['release_zip' => 'Request changes so the author can upload a ZIP for this version before approval.']);
+        }
 
         $productVersion->update([
             'status' => 'approved', 'reviewed_by' => $request->user()->id,

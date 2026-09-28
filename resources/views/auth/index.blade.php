@@ -219,11 +219,11 @@
         },
         signup: {
             customer: ['Create your account', 'Buy once, download forever — and hire the studio when you need more.'],
-            author: ['Apply as a developer', 'Sell on Forge Market with a hand-reviewed listing.'],
+            author: ['Create developer account', 'Sell on Forge Market with hand-reviewed listings.'],
             admin: ['Request console access', 'Studio admin accounts are provisioned by an existing owner.']
         }
     };
-    var submitLabels = { customer: 'Create account', author: 'Apply to sell', admin: 'Request access' };
+    var submitLabels = { customer: 'Create account', author: 'Create developer account', admin: 'Request access' };
     var orgLabels = { customer: ['Company', 'Stacklane'], author: ['Author alias', 'mara.dev'], admin: ['Team', 'Forge Studio'] };
     var termsCopyByRole = {
         customer: 'I accept the terms of service and the refund policy.',
@@ -231,7 +231,6 @@
         admin: 'I accept the terms of service. Console access still requires manual approval.'
     };
     var approvalCopyByRole = {
-        author: 'Developer applications are reviewed by the studio — usually within a few business days.',
         admin: 'Console access is granted by an existing owner. Your request is sent to the studio for approval.'
     };
 

@@ -32,27 +32,15 @@ class RegisterController extends Controller
             'terms' => ['accepted'],
         ]);
 
-        // Every public sign-up becomes a 'customer' account — there is no path here that
-        // grants 'author' or 'admin' directly. Both of those are requests a human reviews:
-        // an author application goes into the same queue Admin\AuthorController already
-        // approves from, and an admin-access request lands as a ticket the studio can act on.
         $user = User::create([
             'name' => $data['name'],
             'company' => $data['company'] ?? null,
             'email' => $data['email'],
             'password' => Hash::make($data['password']),
-            'role' => 'customer',
+            'role' => $data['intended_role'] === 'author' ? 'author' : 'customer',
         ]);
 
         $status = null;
-
-        if ($data['intended_role'] === 'author') {
-            $user->update([
-                'author_application_status' => 'pending',
-                'author_application_note' => trim('Applied via sign-up.'.($user->company ? ' Alias: '.$user->company.'.' : '')),
-            ]);
-            $status = 'Account created — your author application is in review. We\'ll email you within a few days.';
-        }
 
         if ($data['intended_role'] === 'admin') {
             $ticket = Ticket::create([
@@ -70,6 +58,7 @@ class RegisterController extends Controller
         Auth::login($user);
         $request->session()->regenerate();
 
-        return redirect()->intended(route('account.overview'))->with('status', $status);
+        return redirect()->intended($user->isAuthor() ? route('author.overview') : route('account.overview'))
+            ->with('status', $status);
     }
 }

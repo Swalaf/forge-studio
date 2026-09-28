@@ -16,7 +16,11 @@
         @if (count($tabs))
             <div class="dt-tabs">
                 @foreach ($tabs as $tab)
-                    <span class="dt-tab {{ $tab['active'] ? 'is-active' : '' }}">{{ $tab['label'] }}</span>
+                    @if (isset($tab['url']))
+                        <a href="{{ $tab['url'] }}" class="dt-tab {{ $tab['active'] ? 'is-active' : '' }}" @if ($tab['active']) aria-current="page" @endif>{{ $tab['label'] }}</a>
+                    @else
+                        <span class="dt-tab {{ $tab['active'] ? 'is-active' : '' }}">{{ $tab['label'] }}</span>
+                    @endif
                 @endforeach
             </div>
         @endif
